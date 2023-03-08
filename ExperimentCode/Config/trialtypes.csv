@@ -1,0 +1,14 @@
+mainCondition,OrientationDir,MotionDir,isCardinal
+1,0,NaN,1
+2,NaN,315,0
+2,NaN,180,1
+1,45,NaN,0
+2,NaN,270,1
+2,NaN,225,0
+0,NaN,NaN,NaN
+1,135,NaN,0
+2,NaN,0,1
+2,NaN,45,0
+1,90,NaN,1
+2,NaN,135,0
+2,NaN,90,1

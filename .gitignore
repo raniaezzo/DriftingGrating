@@ -1,0 +1,10 @@
+Data/**
+*.pdf
+*.png
+*.bmp
+*.fig
+*.edf
+*.dat
+*.m~
+*.mat
+.DS_Store
