@@ -31,6 +31,10 @@ const.stimRadius_xpix = round(scr.windY_px/2 * scr.maxDiam_percent); % constrain
 const.stimRadius_ypix = round(scr.windY_px/2 * scr.maxDiam_percent);
 const.stimRadius_deg =  pix2vaDeg(const.stimRadius_xpix,scr);
 
+% 
+const.stimCosEdge_deg = 2;
+const.stimCosEdge_pix = vaDeg2pix(2, scr);
+
 % stimulus location
 const.stimCenterEcc_deg = 0; % 0 degrees eccentricity (center)
 
@@ -55,45 +59,42 @@ const.gratingtex=Screen('MakeTexture', const.window, gratingtex);
 %     [0.5 0.5 0.5 0.0], 1, 0.5);
 
 filterparam = const.stimRadius_ypix; % for circular aperature diam
-%filterparam = grating_halfw/2; % figure out sigma thresh? (not using anyway)
 
-% Compute outer boundary:
+% Compute outer boundary
 Y_halfdiam = round((scr.windY_px)/2); X_halfdiam = round((scr.windX_px)/2);
-% maskOuter=ones(Y_halfdiam*2+1, Y_halfdiam*2+1, 2) * 0.5;
-% [x,y] = meshgrid(-Y_halfdiam:Y_halfdiam, -Y_halfdiam:Y_halfdiam);
-% maskOuter(:, :, 2)= round(1 * (1 - exp(-((x/filterparam).^2)-((y/filterparam).^2)))); % round for circular aperature
-% % add cols to fill horizontal space
-% addcol1 = repmat([0.5], [Y_halfdiam*2+1, round((scr.windX_px-(Y_halfdiam*2+1))/2),1]);
-% addcol2 = repmat([1], [Y_halfdiam*2+1, round((scr.windX_px-(Y_halfdiam*2+1))/2),1]);
-% addcols = cat(3, addcol1, addcol2);
-% maskOuter = [addcols, maskOuter, addcols];
+maskOuter=ones(Y_halfdiam*2+1, X_halfdiam*2+1, 2) * 0.5; % grey
+[finalY, finalX, ~] = size(maskOuter);
 
-% re-doing above:
-% first make screen mask (all gray)
-maskOuter=ones(Y_halfdiam*2+1, X_halfdiam*2+1, 2) * 0.5;
-% make cosine window based on stimulus radius
-N = filterparam*2+1; M=filterparam*2+1;
-w_func = @hann;
-wc=window(w_func,N); wr=window(w_func,M);
-%maskOuter2 = wc * wr';   % incorrect 1s and 0s direction
-[maskr,maskc]=meshgrid(wr,wc);
-maskOuter2=maskr.*maskc;
-maskOuter3 = 1 - (maskOuter2 - min(min(maskOuter2))) / ...
-    (max(max(maskOuter2)) - min(min((maskOuter2)))); % flip 1s and 0s
+% make subwindow for cosine ramp for stimulus
+imsize = filterparam*2+1;
 
-[v_start, h_start, ~] = size(maskOuter);
-[v_final, h_final, ~] = size(maskOuter3);
+[x, y] = meshgrid(-imsize/2+0.5:imsize/2-0.5, -imsize/2+0.5:imsize/2-0.5);
+[~, r] = cart2pol(x,y);
 
-if (v_start-v_final)~=0
-    addv = ones((v_start-v_final)/2, h_final);
-    maskOuter3 = [addv; maskOuter3; addv];
-    [v_final, h_final, ~] = size(maskOuter3);
+alpha = zeros(imsize,imsize);
+
+inner_radius = filterparam - const.stimCosEdge_pix; 
+outer_radius = filterparam;
+
+for ii = 1:imsize
+    for jj = 1:imsize
+        if r(ii,jj) < inner_radius
+            alpha(ii,jj) = 0;
+        elseif r(ii,jj) < outer_radius
+            alpha(ii,jj) = (1-cosd(r(ii,jj)-inner_radius))/2;
+        else
+            alpha(ii,jj) = 1;
+        end
+    end
 end
-if (h_start-h_final)~=0
-    addh = ones(v_final, (h_start-h_final)/2);
-    maskOuter3 = [addh, maskOuter3, addh];
-end
-maskOuter(:,:,2) = maskOuter3;
+
+[aRows, aCols] = size(alpha);
+addcols = repmat([1], [aRows, round((finalX-(aCols))/2),1]);
+alpha = [addcols, alpha, addcols];
+[aRows, aCols] = size(alpha);
+addrows = repmat([1], [round((finalY-(aRows))/2), aCols,1]);
+alpha = [addrows; alpha; addrows];
+maskOuter(:,:,2) = alpha;
 
 const.maskOutertex=Screen('MakeTexture', const.window, maskOuter);
 const.maskOuter = maskOuter; % save in case needed later
