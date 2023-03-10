@@ -58,22 +58,45 @@ filterparam = const.stimRadius_ypix; % for circular aperature diam
 %filterparam = grating_halfw/2; % figure out sigma thresh? (not using anyway)
 
 % Compute outer boundary:
-% maskOuter=ones(2*(const.grating_halfw) +const.stimSF_ppc+1, ...
-%     2*(const.grating_halfw) +const.stimSF_ppc+1, 2) * 0.5;
-% [x,y] = meshgrid(-const.stimSF_ppc/2-const.grating_halfw:const.grating_halfw +const.stimSF_ppc/2, ...
-%     -const.stimSF_ppc/2-const.grating_halfw:const.grating_halfw + const.stimSF_ppc/2);
-Y_halfdiam = round((scr.windY_px)/2);
-maskOuter=ones(Y_halfdiam*2+1, Y_halfdiam*2+1, 2) * 0.5;
-[x,y] = meshgrid(-Y_halfdiam:Y_halfdiam, -Y_halfdiam:Y_halfdiam);
-%maskOuter=ones(scr.windX_px+1, scr.windY_px+1, 2) * 0.5;
-%[x,y] = meshgrid(-scr.windY_px/2:scr.windY_px/2, -scr.windX_px/2:scr.windX_px/2);
-maskOuter(:, :, 2)= round(1 * (1 - exp(-((x/filterparam).^2)-((y/filterparam).^2)))); % round for circular aperature
-% add cols to fill horizontal space
-addcol1 = repmat([0.5], [Y_halfdiam*2+1, round((scr.windX_px-(Y_halfdiam*2+1))/2),1]);
-addcol2 = repmat([1], [Y_halfdiam*2+1, round((scr.windX_px-(Y_halfdiam*2+1))/2),1]);
-addcols = cat(3, addcol1, addcol2);
-maskOuter = [addcols, maskOuter, addcols];
+Y_halfdiam = round((scr.windY_px)/2); X_halfdiam = round((scr.windX_px)/2);
+% maskOuter=ones(Y_halfdiam*2+1, Y_halfdiam*2+1, 2) * 0.5;
+% [x,y] = meshgrid(-Y_halfdiam:Y_halfdiam, -Y_halfdiam:Y_halfdiam);
+% maskOuter(:, :, 2)= round(1 * (1 - exp(-((x/filterparam).^2)-((y/filterparam).^2)))); % round for circular aperature
+% % add cols to fill horizontal space
+% addcol1 = repmat([0.5], [Y_halfdiam*2+1, round((scr.windX_px-(Y_halfdiam*2+1))/2),1]);
+% addcol2 = repmat([1], [Y_halfdiam*2+1, round((scr.windX_px-(Y_halfdiam*2+1))/2),1]);
+% addcols = cat(3, addcol1, addcol2);
+% maskOuter = [addcols, maskOuter, addcols];
+
+% re-doing above:
+% first make screen mask (all gray)
+maskOuter=ones(Y_halfdiam*2+1, X_halfdiam*2+1, 2) * 0.5;
+% make cosine window based on stimulus radius
+N = filterparam*2+1; M=filterparam*2+1;
+w_func = @hann;
+wc=window(w_func,N); wr=window(w_func,M);
+%maskOuter2 = wc * wr';   % incorrect 1s and 0s direction
+[maskr,maskc]=meshgrid(wr,wc);
+maskOuter2=maskr.*maskc;
+maskOuter3 = 1 - (maskOuter2 - min(min(maskOuter2))) / ...
+    (max(max(maskOuter2)) - min(min((maskOuter2)))); % flip 1s and 0s
+
+[v_start, h_start, ~] = size(maskOuter);
+[v_final, h_final, ~] = size(maskOuter3);
+
+if (v_start-v_final)~=0
+    addv = ones((v_start-v_final)/2, h_final);
+    maskOuter3 = [addv; maskOuter3; addv];
+    [v_final, h_final, ~] = size(maskOuter3);
+end
+if (h_start-h_final)~=0
+    addh = ones(v_final, (h_start-h_final)/2);
+    maskOuter3 = [addh, maskOuter3, addh];
+end
+maskOuter(:,:,2) = maskOuter3;
+
 const.maskOutertex=Screen('MakeTexture', const.window, maskOuter);
+const.maskOuter = maskOuter; % save in case needed later
 
 filterparam = 0.08*const.stimRadius_ypix;
 
@@ -84,6 +107,7 @@ maskInner=ones(2*(const.grating_halfw) +const.stimSF_ppc+1, ...
     -const.stimSF_ppc/2-const.grating_halfw:const.grating_halfw + const.stimSF_ppc/2);
 maskInner(:, :, 2)= round((exp(-((x/filterparam).^2)-((y/filterparam).^2))));
 const.maskInnertex=Screen('MakeTexture', const.window, maskInner);
+const.maskInner = maskInner; % save in case needed later
 
 % prepare input for stimulus
 const.phaseLine = rand(1, expDes.nb_trials) .* 360;

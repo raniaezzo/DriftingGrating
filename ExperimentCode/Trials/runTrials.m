@@ -37,6 +37,7 @@ if const.EL_mode
     end
 end
 
+HideCursor(scr.scr_num);
 keyCode = instructions(scr,const,my_key,textExp.instruction);
 
 task = my_task(expDes, scr);

@@ -57,6 +57,7 @@ if ~computerDetails.windows
         case 'Ranias-MacBook-Pro-2'
             scr.experimenter = 'Rania';
             scr.scrViewingDist_cm = 50;
+            scr.maxDiam_percent = 15.82/18.56; % just to view as in scanner
 
         case 'ADUAE08550LP-MX-4'
             scr.experimenter = 'NYUADScanner';
@@ -117,7 +118,6 @@ ListenChar(1);                        % Listen for keyboard input
 % open a grey window (size defined above)
 [const.window, const.windowRect] = PsychImaging('OpenWindow', scr.scr_num, ...
     [.5 .5 .5], scr_dim, [], [], [], [], []);
-%HideCursor(scr.scr_num);
 % [window, windowRect] = PsychImaging('OpenWindow', scr.scr_num, ...
 %     [.5 .5 .5], [0, 0, scr.windX_px, scr.windY_px], 32, 2, [], [], kPsychNeed32BPCFloat);
 

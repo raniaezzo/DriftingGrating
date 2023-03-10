@@ -39,6 +39,7 @@ while ~push_button
         addi = addi+1;
     end
     addi = addi+2;
+    my_fixation(scr,const,const.black)
     Screen('Flip',const.window);
     
     % wait for trigger with keyboard (keep with VPIXX for ability to quit)
