@@ -62,7 +62,10 @@ filterparam = const.stimRadius_ypix; % for circular aperature diam
 
 % Compute outer boundary
 Y_halfdiam = round((scr.windY_px)/2); X_halfdiam = round((scr.windX_px)/2);
-maskOuter=ones(Y_halfdiam*2+1, X_halfdiam*2+1, 2) * 0.5; % grey
+%maskOuter=ones(Y_halfdiam*2+1, X_halfdiam*2+1, 2) * 0.5; % grey
+const.pinknoise_ampSpec = 1.1;
+pinknoise = oneoverf(const.pinknoise_ampSpec, Y_halfdiam*2+1, X_halfdiam*2+1);
+maskOuter = cat(3, pinknoise, pinknoise);
 [finalY, finalX, ~] = size(maskOuter);
 
 % make subwindow for cosine ramp for stimulus
