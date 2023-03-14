@@ -54,7 +54,7 @@ try
             xoffset = mod(i*shiftperframe,const.stimSpeed_ppc);
 
             if trialType==2   
-                i=i+1;x
+                i=i+1;
             end
 
             srcRect=[xoffset 0 xoffset + visiblesize visiblesize];
