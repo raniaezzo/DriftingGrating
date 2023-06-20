@@ -1,0 +1,30 @@
+close all
+clear all
+clc
+
+ListenChar(0);
+Devices=PsychHID('Devices');
+keyboardsIDs = [];
+for iiD = 1:numel(Devices)
+    try
+        KbQueueCreate(Devices(iiD).index);
+        KbQueueStart(Devices(iiD).index);
+        keyboardsIDs(end+1,1) = Devices(iiD).index;
+    end
+end
+
+stopScript = 0;
+while ~stopScript
+    for iiD = 1:numel(keyboardsIDs)
+        [keyIsDown, firstPress]=KbQueueCheck(keyboardsIDs(iiD));
+        if keyIsDown
+            keyID = find(firstPress)
+            disp(keyID)
+            if any(keyID ==20), stopScript =1; end
+        end
+    end
+end
+for iiD = 1:numel(keyboardsIDs)
+    KbQueueStop(keyboardsIDs(iiD));
+end
+ListenChar();

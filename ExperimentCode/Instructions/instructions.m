@@ -17,7 +17,8 @@ function keyCode = instructions(scr,const,my_key,text)
 x_mid = scr.windCenter_px(1);
 y_mid = scr.windCenter_px(2);
 
-while KbCheck(-1); end
+%while KbCheck(-1); end
+while KbCheck(my_key.keyboardID); end
 KbName('UnifyKeyNames');
 
 push_button = 0;
@@ -35,6 +36,7 @@ while ~push_button
     
     addi = 0;
     for t_lines = 1:sizeT(1)
+        Screen('DrawTexture', const.window, const.pinknoiseTex); % just added
         Screen('DrawText',const.window,text{t_lines,:},x_mid-bound(3)/2,first_line+addi*espace, const.white);
         addi = addi+1;
     end
@@ -43,9 +45,10 @@ while ~push_button
     Screen('Flip',const.window);
     
     % wait for trigger with keyboard (keep with VPIXX for ability to quit)
-    [ keyIsDown, ~, keyCode ] = KbCheck(-1);
+    [ keyIsDown, ~, keyCode ] = KbCheck(my_key.keyboardID); %KbCheck(-1);
     if keyIsDown
         if keyCode(my_key.Trigger)
+            disp('TRIGGERED!')
             push_button=1;
         elseif keyCode(my_key.escape) && ~const.expStart
             return

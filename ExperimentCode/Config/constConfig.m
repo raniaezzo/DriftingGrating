@@ -32,8 +32,8 @@ const.stimRadius_ypix = round(scr.windY_px/2 * scr.maxDiam_percent);
 const.stimRadius_deg =  pix2vaDeg(const.stimRadius_xpix,scr);
 
 % 
-const.stimCosEdge_deg = 2;
-const.stimCosEdge_pix = vaDeg2pix(2, scr);
+const.stimCosEdge_deg = 1; %1.5;
+const.stimCosEdge_pix = vaDeg2pix(const.stimCosEdge_deg, scr);
 
 % stimulus location
 const.stimCenterEcc_deg = 0; % 0 degrees eccentricity (center)
@@ -62,13 +62,15 @@ filterparam = const.stimRadius_ypix; % for circular aperature diam
 
 % Compute pink noise background with grey circle in the center
 Y_halfdiam = round((scr.windY_px)/2); X_halfdiam = round((scr.windX_px)/2);
-%maskOuter=ones(Y_halfdiam*2+1, X_halfdiam*2+1, 2) * 0.5; % grey
 const.pinknoise_ampSpec = 1.1;
-pinknoise = oneoverf(const.pinknoise_ampSpec, Y_halfdiam*2+1, X_halfdiam*2+1);
+pinknoise = oneoverf(const.pinknoise_ampSpec, const.windowRect(4)+1, const.windowRect(3)+1); %Y_halfdiam*2+1, X_halfdiam*2+1);
 % set gray circle with width (filterparam)
 masknan = createmask(pinknoise, const.stimRadius_ypix);
-background = pinknoise.*masknan;
-background(isnan(background)) = 0.5;
+background = pinknoise; %.*masknan; % BACK
+%background(isnan(background)) = 0.5; % BACK FOR GRAY CIRCLE
+
+const.pinknoise = pinknoise;
+const.pinknoiseTex = Screen('MakeTexture', const.window, pinknoise);
 
 maskOuter = cat(3, background, background);
 [finalY, finalX, ~] = size(maskOuter);
@@ -81,15 +83,27 @@ imsize = filterparam*2+1;
 
 alpha = zeros(imsize,imsize);
 
-inner_radius = filterparam - const.stimCosEdge_pix; 
+inner_radius = filterparam - const.stimCosEdge_pix; % 384 - 177 (or 44)
 outer_radius = filterparam;
+
+% ust added
+cosX = linspace(-pi, 0, 1001);
+cosY = (cos(cosX)+1)/2;
+aa = r - inner_radius;
+test = aa(aa < outer_radius-inner_radius);
+test = test(test > inner_radius-inner_radius);
+maxR = max(test); minR = min(test);
 
 for ii = 1:imsize
     for jj = 1:imsize
         if r(ii,jj) < inner_radius
             alpha(ii,jj) = 0;
         elseif r(ii,jj) < outer_radius
-            alpha(ii,jj) = (1-cosd(r(ii,jj)-inner_radius))/2;
+            dist = r(ii,jj)-inner_radius;
+            pick = (dist - minR) / (maxR - minR) *1000;
+            choose = round(pick);
+            alpha(ii,jj) = cosY(choose+1);
+            %alpha(ii,jj) = (1-cosd(r(ii,jj)-inner_radius))/2;
         else
             alpha(ii,jj) = 1;
         end
@@ -109,12 +123,64 @@ const.maskOuter = maskOuter; % save in case needed later
 
 filterparam = 0.08*const.stimRadius_ypix;
 
+inner_radius = filterparam + const.stimCosEdge_pix;
+outer_radius = filterparam;
+
+% again (for inner)
+imsize = round(filterparam*2)+1;
+
+[x, y] = meshgrid(-imsize/2+0.5:imsize/2-0.5, -imsize/2+0.5:imsize/2-0.5);
+[~, r] = cart2pol(x,y);
+
+alpha = zeros(imsize,imsize);
+
+cosX = linspace(0, pi, 1001);
+cosY = (cos(cosX)+1)/2;
+aa = r - inner_radius;
+test = aa(aa < outer_radius-inner_radius);
+test = test(test > inner_radius-inner_radius);
+maxR = max(test); minR = min(test);
+
+for ii = 1:imsize
+    for jj = 1:imsize
+        if r(ii,jj) < inner_radius
+            alpha(ii,jj) = 0;
+        elseif r(ii,jj) < outer_radius
+            dist = r(ii,jj)-inner_radius;
+            pick = (dist - minR) / (maxR - minR) *1000;
+            choose = round(pick);
+            alpha(ii,jj) = cosY(choose+1);
+            %(1-cosd(r(ii,jj)-inner_radius))/2
+            %cosY(round(r(ii,jj)-inner_radius));
+            %(1-cosd(r(ii,jj)-inner_radius))/2;
+        else
+            alpha(ii,jj) = 1;
+        end
+    end
+end
+%
+
 % Compute inner boundary:
-maskInner=ones(2*(const.grating_halfw) +const.stimSF_ppc+1, ...
-    2*(const.grating_halfw) +const.stimSF_ppc+1, 2) * 0.5;
-[x,y] = meshgrid(-const.stimSF_ppc/2-const.grating_halfw:const.grating_halfw +const.stimSF_ppc/2, ...
-    -const.stimSF_ppc/2-const.grating_halfw:const.grating_halfw + const.stimSF_ppc/2);
-maskInner(:, :, 2)= round((exp(-((x/filterparam).^2)-((y/filterparam).^2))));
+tempSize = (const.grating_halfw) +const.stimSF_ppc; %2*(const.grating_halfw) +const.stimSF_ppc;
+tempSize = round(tempSize);
+if rem(tempSize,2)==0
+    tempSize = tempSize + 1; % make odd to perfectly center
+end
+maskInner=ones(tempSize, tempSize, 2) * 1; %0.5;
+[pn_size_Y, pn_size_X] = size(pinknoise);
+pinknoiseCrop = pinknoise((pn_size_Y/2)-(floor(tempSize/2)):(pn_size_Y/2)+(floor(tempSize/2)), ...
+    (pn_size_X/2)-(floor(tempSize/2)):(pn_size_X/2)+(floor(tempSize/2)));
+maskInner(:,:,1) = pinknoiseCrop;
+
+[x1,y1] = meshgrid(ceil(-const.stimSF_ppc/2-const.grating_halfw):floor(const.grating_halfw +const.stimSF_ppc/2), ...
+    ceil(-const.stimSF_ppc/2-const.grating_halfw):floor(const.grating_halfw + const.stimSF_ppc/2));
+
+% [x, y] = meshgrid((pn_size_Y/2)-(floor(tempSize/2)):(pn_size_Y/2)+(floor(tempSize/2)), ...
+%     (pn_size_X/2)-(floor(tempSize/2)):(pn_size_X/2)+(floor(tempSize/2)));
+
+x = imresize(x1,[tempSize tempSize]); y = imresize(y1,[tempSize tempSize]); 
+
+maskInner(:, :, 2)= (exp(-((x/filterparam).^2)-((y/filterparam).^2))); % removed round to make gaussian
 const.maskInnertex=Screen('MakeTexture', const.window, maskInner);
 const.maskInner = maskInner; % save in case needed later
 
@@ -143,6 +209,6 @@ const.mapdirection = containers.Map(directionids,ptbdirection);
 %% Saving procedure :
 
 % .mat file
-save(const.const_fileMat,'const');
+tsave(const.const_fileMat,'const');
 
 end

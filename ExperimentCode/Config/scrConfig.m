@@ -58,13 +58,19 @@ if ~computerDetails.windows
             scr.experimenter = 'Rania';
             scr.scrViewingDist_cm = 50;
             scr.maxDiam_percent = 15.82/18.56; % just to view as in scanner
-
+            const.keyboard = 'Apple Internal Keyboard / Trackpad';
         case 'ADUAE08550LP-MX-4'
             scr.experimenter = 'NYUADScanner';
             scr.scrViewingDist_cm = 88;
             scr.maxDiam_percent = 15.82/18.56; % use adjusted vertical screen size (18.56 deg)
                                                  % to account for eyetracker obstruction in LVF
             const.vpixx = 1;
+        case 'Stimulus-Mac-2'
+            scr.experimenter = 'NYUNYScanner';
+            scr.scrViewingDist_cm = 88;
+            scr.maxDiam_percent = 15.82/18.56; % use adjusted vertical screen size (18.56 deg)
+                                                 % to account for eyetracker obstruction in LVF
+            const.vpixx = 0;
         otherwise
             disp('SET screen configuration & viewing distance in scrConfig.m')
             scr.experimenter = 'Unknown';

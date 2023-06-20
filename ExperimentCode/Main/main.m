@@ -14,12 +14,11 @@ function main(const)
 
 % File directory :
 [const] = dirSaveFile(const);
-
 % Screen configuration :
 [scr, const] = scrConfig(const);
 
 % Keyboard configuration :
-[my_key] = keyConfig;
+[my_key] = keyConfig(const);
 
 % Experimental design configuration :
 [expDes] = designConfig(scr,const);

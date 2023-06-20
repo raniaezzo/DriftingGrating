@@ -15,6 +15,7 @@ try
         end
 
         % draw stimuli here, better at the start of the drawing loop
+        Screen('DrawTexture', const.window, const.pinknoiseTex); % just added
         my_fixation(scr,const,fixColor)
         Screen('DrawingFinished',const.window); % small ptb optimisation
         vbl = Screen('Flip',const.window, vbl + (waitframes - 0.5) * scr.ifi);

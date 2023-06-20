@@ -67,7 +67,7 @@ try
                 [], [], [], [], []); %, propertiesMat');
 
             % outer and inner masks
-            Screen('DrawTexture', const.window, maskOutertex, [], [0 0 scr.windX_px scr.windY_px], []);
+            Screen('DrawTexture', const.window, maskOutertex, [], [], []); %[0 0 scr.windX_px scr.windY_px], []);
             Screen('DrawTexture', const.window, maskInnertex, [], dstRect, []);
 
             % Change the blend function to draw an antialiased fixation point
@@ -87,9 +87,9 @@ try
             vbl = Screen('Flip',const.window, vbl + (waitframes - 0.5) * scr.ifi);
 
             % check for keyboard input
-            [keyIsDown, ~, keyCode] = KbCheck;
+            [keyIsDown, ~, keyCode] = KbCheck(my_key.keyboardID);
             if keyIsDown && keyCode(my_key.escape)
-                ShowCursor; sca; return
+                ShowCursor; sca; clear mex; clear fun; return
             elseif keyIsDown && ~keyCode(my_key.escape)
                 task(frameCounter,2) = 1;   
             end
