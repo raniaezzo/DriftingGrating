@@ -25,6 +25,11 @@ my_key.escape       = KbName('ESCAPE');
 my_key.space        = KbName('Space');
 my_key.rightArrow   = KbName('RightArrow');
 my_key.leftArrow    = KbName('LeftArrow');
-my_key.Trigger      = KbName('T');
+
+if const.DEBUG == 1
+    my_key.Trigger      = KbName('T');
+else
+    my_key.Trigger      = KbName('5'); % from button box
+end
 
 end

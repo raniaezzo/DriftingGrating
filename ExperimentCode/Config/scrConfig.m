@@ -37,6 +37,8 @@ const.my_clock_ini = clock;
 computerDetails = Screen('Computer');  % check computer specs
 
 scr.scr_num = max(Screen('Screens')); % use max screen
+disp('Screen Number')
+scr.scr_num
 
 % Size of the display (mm):
 [scrX_mm, scrY_mm] = Screen('DisplaySize',scr.scr_num);
@@ -67,10 +69,15 @@ if ~computerDetails.windows
             const.vpixx = 1;
         case 'Stimulus-Mac-2'
             scr.experimenter = 'NYUNYScanner';
-            scr.scrViewingDist_cm = 88;
+            scr.scrViewingDist_cm = 83.5;
             scr.maxDiam_percent = 15.82/18.56; % use adjusted vertical screen size (18.56 deg)
                                                  % to account for eyetracker obstruction in LVF
             const.vpixx = 0;
+            if const.DEBUG == 1
+                const.keyboard = 'Magic Keyboard'; % local experimental mac
+            else
+                const.keyboard = '932'; % buttonbox / trigger (different device)
+            end
         otherwise
             disp('SET screen configuration & viewing distance in scrConfig.m')
             scr.experimenter = 'Unknown';
