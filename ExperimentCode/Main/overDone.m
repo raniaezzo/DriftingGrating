@@ -1,4 +1,4 @@
-function overDone(const, responses)
+function overDone(const, responses, trial_onsets)
 % ----------------------------------------------------------------------
 % overDone
 % ----------------------------------------------------------------------
@@ -18,6 +18,9 @@ fprintf(fid, 'Run%i', const.run)
 
 % .mat file
 save(const.responses_fileMat,'responses');
+
+timestamp_path = strrep(const.responses_fileMat,'responses', 'timestamps');
+save(timestamp_path,'trial_onsets');
 
 %figure
 %plot(responses(1:length(responses)/4))

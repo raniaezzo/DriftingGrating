@@ -38,9 +38,9 @@ end
 
 % Main part :
 if const.expStart;ListenChar(2);end
-[responses] = runTrials(scr,const,expDes,my_key,textExp);
+[task, trial_onsets] = runTrials(scr,const,expDes,my_key,textExp);
 
 % End
-overDone(const, responses)
+overDone(const, responses, trial_onsets)
 
 end

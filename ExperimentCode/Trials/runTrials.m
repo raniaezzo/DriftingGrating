@@ -1,4 +1,4 @@
-function task = runTrials(scr,const,expDes,my_key,textExp)
+function [task, trial_onsets] = runTrials(scr,const,expDes,my_key,textExp)
 % ----------------------------------------------------------------------
 % runTrials(scr,const,expDes,my_key,textExp,button)
 % ----------------------------------------------------------------------
@@ -53,16 +53,19 @@ paddingX = 0;
 
 tic
 vbl = Screen('Flip',const.window);
+t0=vbl;
+trial_onsets = nan(1,(nb_trials));
 
 while ~const.expStop
     
     % PADDING PERIOD
     [paddingX, task, frameCounter, vbl] = my_padding(my_key, scr,const, expDes, task, frameCounter, paddingX, vbl);
-
+    
     % TRIAL PERIOD
     if paddingX < 2
         for ni=1:expDes.nb_trials
             if const.EL_mode, Eyelink('message', 'TRIAL %d START', ni); end
+            trial_onsets(ni) = vbl-t0; % log the onset of each
             [task, frameCounter, vbl] = my_stim(my_key, scr,const,expDes,task, frameCounter,ni,vbl);
             if const.EL_mode, Eyelink('message', 'TRIAL %d END', ni); end
         end

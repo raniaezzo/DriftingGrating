@@ -40,18 +40,12 @@ scr.scr_num = max(Screen('Screens')); % use max screen
 disp('Screen Number')
 scr.scr_num
 
-% Size of the display (mm):
-[scrX_mm, scrY_mm] = Screen('DisplaySize',scr.scr_num);
-scr.scrX_cm = scrX_mm/10; scr.scrY_cm = scrY_mm/10;
-
-% Resolution of the display (pixels):
-resolution = Screen('Resolution',scr.scr_num);
-scr.scrX_px = resolution.width;
-scr.scrY_px = resolution.height;
-scr.scrPixelDepth_bpp = resolution.pixelSize; % bits per pixel
 scr.maxDiam_percent = 1; % maximum % of radius without eyetracker obstruction
 
 const.vpixx = 0; % assume no vpixx unless set below (overridden by debug==0)
+
+% Size of the display (mm) - will be overwritten if provided below:
+[scrX_mm, scrY_mm] = Screen('DisplaySize',scr.scr_num);
 
 % find screen details
 if ~computerDetails.windows
@@ -59,18 +53,18 @@ if ~computerDetails.windows
         case 'Ranias-MacBook-Pro-2'
             scr.experimenter = 'Rania';
             scr.scrViewingDist_cm = 50;
-            scr.maxDiam_percent = 15.82/18.56; % just to view as in scanner
+            scr.maxDiam_percent = 1; %15.82/18.56; % just to view as in scanner
             const.keyboard = 'Apple Internal Keyboard / Trackpad';
         case 'ADUAE08550LP-MX-4'
             scr.experimenter = 'NYUADScanner';
             scr.scrViewingDist_cm = 88;
-            scr.maxDiam_percent = 15.82/18.56; % use adjusted vertical screen size (18.56 deg)
+            scr.maxDiam_percent = 1; %15.82/18.56; % use adjusted vertical screen size (18.56 deg)
                                                  % to account for eyetracker obstruction in LVF
             const.vpixx = 1;
         case 'Stimulus-Mac-2'
             scr.experimenter = 'NYUNYScanner';
             scr.scrViewingDist_cm = 83.5;
-            scr.maxDiam_percent = 15.82/18.56; % use adjusted vertical screen size (18.56 deg)
+            scr.maxDiam_percent = 1; %15.82/18.56; % use adjusted vertical screen size (18.56 deg)
                                                  % to account for eyetracker obstruction in LVF
             const.vpixx = 0;
             if const.DEBUG == 1
@@ -89,7 +83,7 @@ else    % PC (field names are different)
         case 'NT-10.0.9200 - '
             scr.experimenter = 'NYUADMockScanner';
             scr.scrViewingDist_cm = 88;
-            scr.maxDiam_percent = 15.82/18.56;
+            scr.maxDiam_percent = 1; %15.82/18.56;
             const.vpixx = 0;
             scr.scr_num = 1;
         otherwise
@@ -99,6 +93,15 @@ else    % PC (field names are different)
             const.DEBUG = 1; 
     end
 end
+
+
+scr.scrX_cm = scrX_mm/10; scr.scrY_cm = scrY_mm/10;
+
+% Resolution of the display (pixels):
+resolution = Screen('Resolution',scr.scr_num);
+scr.scrX_px = resolution.width;
+scr.scrY_px = resolution.height;
+scr.scrPixelDepth_bpp = resolution.pixelSize; % bits per pixel
 
 [scr.windX_px, scr.windY_px]=Screen('WindowSize', scr.scr_num);
 
