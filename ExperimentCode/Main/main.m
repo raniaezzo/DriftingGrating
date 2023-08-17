@@ -16,18 +16,23 @@ function main(const)
 [const] = dirSaveFile(const);
 % Screen configuration :
 [scr, const] = scrConfig(const);
+disp('Finished scrConfig')
 
 % Keyboard configuration :
 [my_key] = keyConfig(const);
+disp('Finished keyConfig')
 
 % Experimental design configuration :
 [expDes] = designConfig(scr,const);
+disp('Finished designConfig')
 
 % Experimental constant :
 [const] = constConfig(scr,const, expDes);
+disp('Finished constConfig')
 
 % Instruction file :
 [textExp] = instructionConfig;
+disp('Finished instrcutionConfig')
 
 % Initialize eyetracking
 if const.EL_mode
@@ -38,7 +43,7 @@ end
 
 % Main part :
 if const.expStart;ListenChar(2);end
-[task, trial_onsets] = runTrials(scr,const,expDes,my_key,textExp);
+[responses, trial_onsets] = runTrials(scr,const,expDes,my_key,textExp);
 
 % End
 overDone(const, responses, trial_onsets)

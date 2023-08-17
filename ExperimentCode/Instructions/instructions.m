@@ -23,6 +23,7 @@ KbName('UnifyKeyNames');
 
 push_button = 0;
 while ~push_button
+    
     Screen('Preference', 'TextAntiAliasing',1);
     Screen('TextSize',const.window, const.text_size);
     Screen ('TextFont', const.window, const.text_font);
@@ -45,9 +46,11 @@ while ~push_button
     Screen('Flip',const.window);
     
     % wait for trigger with keyboard (keep with VPIXX for ability to quit)
-    [ keyIsDown, ~, keyCode ] = KbCheck(my_key.keyboardID); %KbCheck(-1);
+    [ keyIsDown, ~, keyCode ] = KbCheck(my_key.keyboardID); % KbCheck(-1);
     if keyIsDown
-        if keyCode(my_key.Trigger)
+        disp('KEYCODE IS')
+        disp(keyCode)
+        if keyCode(my_key.Trigger) || keyCode(34)
             disp('TRIGGERED!')
             push_button=1;
         elseif keyCode(my_key.escape) && ~const.expStart

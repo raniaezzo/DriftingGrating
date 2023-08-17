@@ -23,9 +23,12 @@ try
 
         % check for keyboard input
         [keyIsDown, ~, keyCode] = KbCheck(my_key.keyboardID);
+        if ~keyIsDown
+            [keyIsDown, ~, keyCode] = KbCheck(my_key.suppResponseID);
+        end
         if keyIsDown && keyCode(my_key.escape)
             ShowCursor; sca; return
-        elseif keyIsDown && ~keyCode(my_key.escape)
+        elseif keyIsDown && ~keyCode(my_key.escape) && ~(keyCode(my_key.Trigger) || keyCode(34))
             task(frameCounter,2) = 1;   
         end
 

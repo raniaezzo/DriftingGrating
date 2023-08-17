@@ -58,7 +58,7 @@ if ~computerDetails.windows
         case 'ADUAE08550LP-MX-4'
             scr.experimenter = 'NYUADScanner';
             scr.scrViewingDist_cm = 88;
-            scr.maxDiam_percent = 1; %15.82/18.56; % use adjusted vertical screen size (18.56 deg)
+            scr.maxDiam_percent = 1; %15.82/18.56; % use adjq6usted vertical screen size (18.56 deg)
                                                  % to account for eyetracker obstruction in LVF
             const.vpixx = 1;
         case 'Stimulus-Mac-2'
@@ -112,6 +112,7 @@ if const.DEBUG == 1
     scr.windY_px = scr.windY_px/2;
     scr_dim = [0, 0, scr.windX_px, scr.windY_px];
     const.vpixx = 0;
+    [~] = Screen('Preference', 'SkipSyncTests', 1); % change to 0 for real exp
 else
     % Window resolution is Screen resolution: [fullscreen]
     scr.windX_px = scr.windX_px;

@@ -19,6 +19,8 @@ function [task, trial_onsets] = runTrials(scr,const,expDes,my_key,textExp)
 
 %% General instructions:
 
+disp('Starting runTrials')
+
 % eyetracking (to do: need to add vpixx)
 if const.EL_mode
     if (const.run==1) || rem(const.run,4) == 0
@@ -54,7 +56,7 @@ paddingX = 0;
 tic
 vbl = Screen('Flip',const.window);
 t0=vbl;
-trial_onsets = nan(1,(nb_trials));
+trial_onsets = nan(1,(expDes.nb_trials));
 
 while ~const.expStop
     
