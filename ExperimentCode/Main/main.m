@@ -36,6 +36,9 @@ disp('Finished instrcutionConfig')
 
 % Initialize eyetracking
 if const.EL_mode
+    if strcmp(scr.experimenter, 'NYUNYScanner')
+        Eyelink('SetAddress','192.168.1.5');
+    end
     const.EL = initEyetracking(const, const.window);
 else
     const.EL = [];

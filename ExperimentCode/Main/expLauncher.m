@@ -16,7 +16,7 @@ KbName('UnifyKeyNames')
 % Initialization
 warning('off');        % do not print warnings
 const.DEBUG = 0;       % if debug==1, vPixx and eyetracking off
-const.EL_mode = 0;     % will later be forced to 0 if const.DEBUG = 1
+const.EL_mode = 1;     % will later be forced to 0 if const.DEBUG = 1
 
 % Try to find correct path:
 dir = (which('expLauncher'));  % find main script
