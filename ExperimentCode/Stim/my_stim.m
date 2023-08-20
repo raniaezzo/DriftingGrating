@@ -91,9 +91,9 @@ try
             if ~keyIsDown
                 [keyIsDown, ~, keyCode] = KbCheck(my_key.suppResponseID);
             end
-            if keyIsDown && keyCode(my_key.escape) && ~(keyCode(my_key.Trigger) || keyCode(34))
+            if keyIsDown && keyCode(my_key.escape)
                 ShowCursor; sca; clear mex; clear fun; return
-            elseif keyIsDown && ~keyCode(my_key.escape)
+            elseif keyIsDown && ~keyCode(my_key.escape) && ~(keyCode(my_key.Trigger) || keyCode(34))
                 task(frameCounter,2) = 1;   
             end
 
