@@ -119,7 +119,7 @@ try
         %rep = 3;
         rep = (expDes.stimDur_s+expDes.itiDur_s)/expDes.itiDur_s;
     end
-
+    
     % shared code for baseline & also intertrial interval
     if const.EL_mode, Eyelink('message', 'BLANK (2 s) START'); end
     [task, frameCounter, vbl] = my_blank(my_key, scr,const, task, frameCounter, expDes.itiDur_s*rep, vbl);

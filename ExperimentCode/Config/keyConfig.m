@@ -17,6 +17,7 @@ function [my_key]=keyConfig(const)
 for i=1:length(productNames)                                               % for each possible devicesca
     if strcmp(productNames{i},const.keyboard)                                % compare the name to the name you want
         my_key.keyboardID=keyboardIndices(i);                                   % grab the correct id, and exit loop
+        my_key.suppResponseID=keyboardIndices(i);
         %break;
     else % added this else to register button box in debug mode
         my_key.suppResponseID=keyboardIndices(i);

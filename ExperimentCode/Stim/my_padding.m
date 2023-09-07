@@ -29,7 +29,7 @@ try
         if keyIsDown && keyCode(my_key.escape)
             ShowCursor; sca; return
         elseif keyIsDown && ~keyCode(my_key.escape) && ~(keyCode(my_key.Trigger) || keyCode(34))
-            task(frameCounter,2) = 1;   
+            task(frameCounter,2) = 1;
         end
 
         % vpixx
@@ -50,6 +50,7 @@ try
     paddingX = paddingX+1;
 
 catch
+    disp('SHUTTING DOWN VPIXX')
     vpixxShutdown(const); 
 end
 

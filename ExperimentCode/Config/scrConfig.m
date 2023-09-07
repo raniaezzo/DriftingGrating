@@ -60,7 +60,12 @@ if ~computerDetails.windows
             scr.scrViewingDist_cm = 88;
             scr.maxDiam_percent = 1; %15.82/18.56; % use adjq6usted vertical screen size (18.56 deg)
                                                  % to account for eyetracker obstruction in LVF
-            const.vpixx = 1;
+            const.keyboard = 'Magic Keyboard with Numeric Keypad';
+            if const.DEBUG == 1
+                const.vpixx = 0;
+            else
+                const.vpixx = 1;
+            end
         case 'Stimulus-Mac-2'
             scr.experimenter = 'NYUNYScanner';
             scr.scrViewingDist_cm = 83.5;
