@@ -47,19 +47,22 @@ const.vpixx = 0; % assume no vpixx unless set below (overridden by debug==0)
 % Size of the display (mm) - will be overwritten if provided below:
 [scrX_mm, scrY_mm] = Screen('DisplaySize',scr.scr_num);
 
+yOffset_percent = 1;
+
 % find screen details
 if ~computerDetails.windows
     switch computerDetails.localHostName
         case 'Ranias-MacBook-Pro-2'
             scr.experimenter = 'Rania';
             scr.scrViewingDist_cm = 50;
-            scr.maxDiam_percent = 1; %15.82/18.56; % just to view as in scanner
             const.keyboard = 'Apple Internal Keyboard / Trackpad';
         case 'ADUAE08550LP-MX-4'
             scr.experimenter = 'NYUADScanner';
-            scr.scrViewingDist_cm = 88;
-            scr.maxDiam_percent = 1; %15.82/18.56; % use adjq6usted vertical screen size (18.56 deg)
-                                                 % to account for eyetracker obstruction in LVF
+            scrX_mm = 720; scrY_mm = 405;
+            scr.scrViewingDist_cm = 83.5; %88;
+            disp('ACCOUNTING FOR SCALING OFFSET BETWEEN PROJECTED IMAGE AND DISPLAY')
+            scr.maxDiam_percent = 0.9; 
+            yOffset_percent = 0.9;
             const.keyboard = 'Magic Keyboard with Numeric Keypad';
             if const.DEBUG == 1
                 const.vpixx = 0;
@@ -69,8 +72,10 @@ if ~computerDetails.windows
         case 'Stimulus-Mac-2'
             scr.experimenter = 'NYUNYScanner';
             scr.scrViewingDist_cm = 83.5;
-            scr.maxDiam_percent = 1; %15.82/18.56; % use adjusted vertical screen size (18.56 deg)
-                                                 % to account for eyetracker obstruction in LVF
+            %(check projected image measurements in NYU NY
+            %scrX_mm = 600; scrY_mm = 362; % based on documentation 
+            % readout is 677 x 380 when automated (keeping this b/c I think there is 
+            % a small part of the projected image off screen).
             const.vpixx = 0;
             if const.DEBUG == 1
                 const.keyboard = 'Magic Keyboard'; % local experimental mac
@@ -146,6 +151,12 @@ ListenChar(1);                        % Listen for keyboard input
 
 % Get the centre coordinate of the window
 [xCenter, yCenter] = RectCenter(const.windowRect);
+
+if strcmp(scr.experimenter, 'NYUADScanner') ||  strcmp(scr.experimenter, 'Rania') % account for projector offset at NYUAD
+    disp('ACCOUNTING FOR VERTICAL OFFSET BETWEEN PROJECTED IMAGE AND DISPLAY')
+    yCenter = yCenter*yOffset_percent;
+end
+
 scr.windCenter_px = [xCenter, yCenter];
 
 % Flip to clear

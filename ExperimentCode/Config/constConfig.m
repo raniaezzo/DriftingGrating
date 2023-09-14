@@ -115,7 +115,11 @@ addcols = repmat([1], [aRows, round((finalX-(aCols))/2),1]);
 alpha = [addcols, alpha, addcols];
 [aRows, aCols] = size(alpha);
 addrows = repmat([1], [round((finalY-(aRows))/2), aCols,1]);
-alpha = [addrows; alpha; addrows];
+if strcmp(scr.experimenter, 'NYUADScanner') ||  strcmp(scr.experimenter, 'Rania') % account for projector offset at NYUAD
+    alpha = [alpha; addrows; addrows];
+else
+    alpha = [addrows; alpha; addrows];
+end
 maskOuter(:,:,2) = alpha;
 
 const.maskOutertex=Screen('MakeTexture', const.window, maskOuter);

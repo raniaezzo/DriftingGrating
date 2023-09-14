@@ -15,7 +15,7 @@ KbName('UnifyKeyNames')
 
 % Initialization
 warning('off');        % do not print warnings
-const.DEBUG = 0;       % if debug==1, vPixx and eyetracking off
+const.DEBUG = 1;       % if debug==1, vPixx and eyetracking off
 const.EL_mode = 0;     % will later be forced to 0 if const.DEBUG = 1
 
 % Try to find correct path:
