@@ -61,8 +61,8 @@ if ~computerDetails.windows
             scrX_mm = 720; scrY_mm = 405;
             scr.scrViewingDist_cm = 83.5; %88;
             disp('ACCOUNTING FOR SCALING OFFSET BETWEEN PROJECTED IMAGE AND DISPLAY')
-            scr.maxDiam_percent = 0.9; 
-            yOffset_percent = 0.9;
+            scr.maxDiam_percent = 0.89; 
+            yOffset_percent = 0.914;
             const.keyboard = 'Magic Keyboard with Numeric Keypad';
             if const.DEBUG == 1
                 const.vpixx = 0;
