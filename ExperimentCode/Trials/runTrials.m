@@ -23,7 +23,7 @@ disp('Starting runTrials')
 
 % eyetracking (to do: need to add vpixx)
 if const.EL_mode
-    if (const.run==1) || rem(const.run,4) == 0
+    if (const.run==1) || rem(const.run,5) == 0
         % removed lines below since redundant
         %keyCode = instructions(scr,const,my_key,textExp.eyeinstruction);
         %if keyCode(my_key.escape), Eyelink('Shutdown'); vpixxShutdown(const); return; end

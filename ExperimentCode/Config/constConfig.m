@@ -114,10 +114,16 @@ end
 addcols = repmat([1], [aRows, round((finalX-(aCols))/2),1]);
 alpha = [addcols, alpha, addcols];
 [aRows, aCols] = size(alpha);
-addrows = repmat([1], [round((finalY-(aRows))/2), aCols,1]);
+
 if strcmp(scr.experimenter, 'NYUADScanner') ||  strcmp(scr.experimenter, 'Rania') % account for projector offset at NYUAD
-    alpha = [alpha; addrows; addrows];
+    totalmissingRows = round(finalY-(aRows));
+    topMissing = totalmissingRows*(0.5/4.5);
+    bottomMissing = totalmissingRows*(4/4.5);
+    addrowsTop = repmat([1], [round(topMissing), aCols,1]);
+    addrowsBottom = repmat([1], [round(bottomMissing), aCols,1]);
+    alpha = [alpha; addrowsTop; addrowsBottom];
 else
+    addrows = repmat([1], [round((finalY-(aRows))/2), aCols,1]);
     alpha = [addrows; alpha; addrows];
 end
 maskOuter(:,:,2) = alpha;
