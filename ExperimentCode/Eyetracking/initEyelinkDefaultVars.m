@@ -289,18 +289,18 @@ el.INPUTEVENT=28;  % /* change of input port */
 el.LOSTDATAEVENT=hex2dec('3F'); %/*new addition v2.1, returned by eyelink_get_next_data() to flag a gap in the data stream due to queue filling up (need to get data more frequently)
                                 %/*described in 'EyeLink Programmers Guide.pdf' section 7.2.2, 13.3.2, 18.5.4
 
-if exist('EyelinkDispatchCallback') %#ok<EXIST>
-   el.callback = 'EyelinkDispatchCallback';
-else
-   el.callback = [];
-end
-
-% RE commented this out and uncommented the 5 lines above
-% if exist('PsychEyelinkDispatchCallback') %#ok<EXIST>
-%     el.callback = 'PsychEyelinkDispatchCallback';
+% if exist('EyelinkDispatchCallback') %#ok<EXIST>
+%    el.callback = 'EyelinkDispatchCallback';
 % else
-%     el.callback = [];
+%    el.callback = [];
 % end
+
+%RE commented this out and uncommented the 5 lines above
+if exist('PsychEyelinkDispatchCallback') %#ok<EXIST>
+    el.callback = 'PsychEyelinkDispatchCallback';
+else
+    el.callback = [];
+end
 
 EyelinkUpdateDefaults(el);
 
