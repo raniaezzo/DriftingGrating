@@ -15,7 +15,7 @@ trialcut = 12; % TRs
 % 10 sec 
 cMotion = []; oMotion = []; cStatic = []; oStatic = []; blank = []; base = [];
 
-for mi=1:length(matrices)
+for mi=2:2 %length(matrices)
     m = matrices{mi};
     df = datafiles{mi};
 
@@ -75,7 +75,7 @@ hold on
 plot(mean(blank)-shift, 'k', 'Linewidth',2, 'Color', [175, 175, 175]/255)
 hold on
 yline(mean(base,'all')-shift, '--')
-title(sprintf('Trial triggered average'))
+title('Trial triggered average')
 xlim([1, 12])
 xlabel('Time (TR)')
 ylabel('% Signal Change')

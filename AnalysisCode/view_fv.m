@@ -96,7 +96,7 @@ for whichHemi = 1:numel(hemi)
             overlayCmd = custom_colormap(bidsDir,overlayName,colormapName,overlayCmd,hemi{whichHemi});
         end
     end
-    if isempty(overlayCmd)
+    if isempty(overlayCmd)      
         warning(['none of the overlay files are found for ' hemi{whichHemi} 'h hemi'])
     end
     whichLabel = sprintf('%s/label/Glasser2016/%sh.MT.label', subjectDir,hemi{whichHemi});
