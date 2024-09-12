@@ -15,7 +15,7 @@ KbName('UnifyKeyNames')
 
 % Initialization
 warning('off');        % do not print warnings
-const.expType = 'da'; % dg=drifting grating;da=drifting annulus,'dgl'=drifting grating local
+const.expType = 'dgl'; % dg=drifting grating;da=drifting annulus,'dgl'=drifting grating local
 const.DEBUG = 1;       % if debug==1, vPixx and eyetracking off
 const.EL_mode = 0;     % will later be forced to 0 if const.DEBUG = 1
 

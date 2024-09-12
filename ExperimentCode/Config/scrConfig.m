@@ -120,8 +120,8 @@ scr.scrPixelDepth_bpp = resolution.pixelSize; % bits per pixel
 if const.DEBUG == 1
     %PsychDebugWindowConfiguration(0, 0.5)
     % Window resolution (pixel): [small window]
-    scr.windX_px = scr.windX_px/2;
-    scr.windY_px = scr.windY_px/2;
+    %scr.windX_px = scr.windX_px/2;
+    %scr.windY_px = scr.windY_px/2;
     scr_dim = [0, 0, scr.windX_px, scr.windY_px];
     const.vpixx = 0;
     [~] = Screen('Preference', 'SkipSyncTests', 1); % change to 0 for real exp

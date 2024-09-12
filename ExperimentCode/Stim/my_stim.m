@@ -1,5 +1,5 @@
 function [task, frameCounter, vbl] = my_stim(my_key, scr,const,expDes, task, frameCounter, trialID, vbl)
-phase=0;
+%phase=0;
 try
     trialType = expDes.trialMat(trialID,2); % 0=baseline, 1=static, 2=motion
 
@@ -16,6 +16,7 @@ try
 
         movieDurationSecs=expDes.stimDur_s;   % Abort after 3 seconds.
         i = const.phaseLine(trialID);
+        phase = i; % this is used in replace of above for some conditions
 
         % included: ~~~~~
 
@@ -23,32 +24,45 @@ try
         visiblesize = const.visiblesize;
         
         gratingtex = const.gratingtex;
+        phaseJump = 360 * const.stimSF_cpp; % in phase units
         
         if strcmp(const.expType, 'dgl')
             if trialType==1 % static
                 phaseJump = 0; 
                 orientation = const.dglmaporientation(expDes.trialMat(trialID,3));
             elseif trialType==2 % moving
-                phaseJump = 25; % always this way (unlike da)
+                %(1/scr.ifi)/const.stimSpeed_cps; %25; % in units of cycles
                 orientation = const.dglmapdirection(expDes.trialMat(trialID,4));
             end
         elseif strcmp(const.expType, 'da')
             if trialType==1 % static
                 phaseJump = 0; 
+                phaseSign = 1; % inconsequential
             elseif trialType==2 % moving
                 if ismember(expDes.trialMat(trialID,4), [0, 45, 270, 315]) % if moving clockwise (includes inward)
                     phaseSign = 1;
                 elseif ismember(expDes.trialMat(trialID,4), [90, 180, 135, 225]) % if movibg counterclockwise (includes outward)
                     phaseSign = -1;
                 end
-                phaseJump = phaseSign*25; % this is only used for 'da'
+                % moved line here prior to if statement and do apply
+                % phaseSign in while loop
+                %phaseJump = phaseSign*25; % this is only used for 'da'
             end
             virtualSize = const.grating_halfw*2;
-            frequency = const.stimSF_cpp; %0.02; % cycles/pixel (0.06)
-            middleRadius = virtualSize/2;
-            middlePerimeter = 2*pi*middleRadius; % pixels
-            % has to scale with eccentricity (half way point)
-            radialFrequency = (frequency*middlePerimeter / (2*pi))*.5;
+            frequency = const.stimSF_cpp; %0.025; % cycles/pixel (0.06)
+            middleRadius = const.grating_halfw; %virtualSize/2;
+            middlePerimeter = 2*pi*middleRadius; % circumference pixels
+            % has to scale so that spatial frequency is computed for half a
+            % circle - more analagous to definine SF in X-dimension only
+            % the 2 pi division normalizes to unit circle
+            % the ./3 scaling was done using screenshots to approximate
+            % equal SF between the cartesian and polar grating
+            % but ultimately I changed the term to pi b/c ratio of radius
+            % to have circumference is 1/pi
+            radialFrequency = (((frequency*middlePerimeter / (2*pi)))) ./pi;
+            circularFrequency = ((radialFrequency/middleRadius) * (2*pi));
+            
+            
             % radial orientation (pinwheel)
             if (trialType==1 && (expDes.trialMat(trialID,3) == 90)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 0)) || ...
@@ -59,16 +73,18 @@ try
                 (trialType==2 && (expDes.trialMat(trialID,4) == 90)) || ...
                 (trialType==2 && (expDes.trialMat(trialID,4) == 270))
                 radialFrequency = 0;
-                circularFrequency = frequency;
+                %circularFrequency = frequency;
             % oblique (spiral)
             elseif (trialType==1 && (expDes.trialMat(trialID,3) == 135)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 45)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 225))
-                circularFrequency = -frequency; 
+                radialFrequency = radialFrequency/2; 
+                circularFrequency = -circularFrequency/2;
             elseif (trialType==1 && (expDes.trialMat(trialID,3) == 45)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 135)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 315))
-                circularFrequency = frequency; 
+                radialFrequency = radialFrequency/2;    
+                circularFrequency = circularFrequency/2; 
             end
         end
         
@@ -124,7 +140,8 @@ try
                 Screen('DrawTexture', const.window, gratingtex, srcRect, dstRect, angle, ...
                     [], [], [], [], []); %, propertiesMat');
             elseif strcmp(const.expType, 'da')
-                phase = phase + phaseJump;
+                %phase = phase + phaseJump;
+                phase = phase + phaseSign*(phaseJump*shiftperframe); % phaseSign only for this condition
                 angle = 0;
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect,...
                     angle, [], [], [0.5 0.5 0.5 1], [], [],...
@@ -134,50 +151,50 @@ try
                     % input4: < 0 is a sinusoid.
                     % input5: circular frequency
             elseif strcmp(const.expType, 'dgl')
-                phase = phase + phaseJump; % phase = 0; 
+                phase = phase + (phaseJump*shiftperframe);
+                %i*const.stimSpeed_cps; %phase + phaseJump; % phase = 0; 
                 baseColor = [0.5 0.5 0.5 1];
-                frequency = 0.02; contrast = 0.5;
                 
                 Screen('BlendFunction', const.window, 'GL_ONE', 'GL_ZERO');
                 % UVM position (angle = 0); 
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
                     0, [], [], baseColor, [], [], ...
-                    [phase, frequency, contrast, orientation]);
+                    [phase, const.stimSF_cpp, const.contrast, orientation]); %cpp = 0.025
                 
                 % UVM position (angle = 0); 
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
                     45, [], [], baseColor, [], [], ...
-                    [phase, frequency, contrast, orientation]);
+                    [phase, const.stimSF_cpp, const.contrast, orientation]);
                 
                 % UVM position (angle = 0); 
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
                     90, [], [], baseColor, [], [], ...
-                    [phase, frequency, contrast, orientation]);
+                    [phase, const.stimSF_cpp, const.contrast, orientation]);
                 
                 % UVM position (angle = 0); 
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
                     135, [], [], baseColor, [], [], ...
-                    [phase, frequency, contrast, orientation]);
+                    [phase, const.stimSF_cpp, const.contrast, orientation]);
                 
                 % UVM position (angle = 0); 
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
                     180, [], [], baseColor, [], [], ...
-                    [phase, frequency, contrast, orientation]);
+                    [phase, const.stimSF_cpp, const.contrast, orientation]);
                 
                 % UVM position (angle = 0); 
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
                     225, [], [], baseColor, [], [], ...
-                    [phase, frequency, contrast, orientation]);
+                    [phase, const.stimSF_cpp, const.contrast, orientation]);
                 
                 % UVM position (angle = 0); 
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
                     270, [], [], baseColor, [], [], ...
-                    [phase, frequency, contrast, orientation]);
+                    [phase, const.stimSF_cpp, const.contrast, orientation]);
                 
                 % UVM position (angle = 0); 
                 Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
                     315, [], [], baseColor, [], [], ...
-                    [phase, frequency, contrast, orientation]);
+                    [phase, const.stimSF_cpp, const.contrast, orientation]);
             end
             
             Screen('BlendFunction', const.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
