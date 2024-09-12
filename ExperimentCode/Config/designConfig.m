@@ -45,7 +45,7 @@ expDes.trialMat = [trialIDs', table2array(trialsequence)];
 
 %% Experiental timing settings
 
-expDes.runPadding_s = 10;    % 10 sec padding at beginning & end
+expDes.runPadding_s = 1; %10;    % 10 sec padding at beginning & end
 expDes.stimDur_s  = 3;       % 3 sec stimulus duration
 expDes.itiDur_s  = 2;      % 1.5 inter-trial interval
 expDes.total_s = (2*expDes.runPadding_s) + (expDes.nb_trials*(expDes.stimDur_s+expDes.itiDur_s));

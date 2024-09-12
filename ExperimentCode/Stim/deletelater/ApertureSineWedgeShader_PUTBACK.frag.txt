@@ -1,0 +1,49 @@
+/*
+ * File: ApertureSineGratingShader.frag.txt
+ * Shader for drawing of basic parameterized sine grating patches.
+ * Applies a circular aperture of radius 'Radius'.
+ *
+ * (c) 2010 by Mario Kleiner, licensed under MIT license.
+ *		 
+ */
+
+uniform float Radius;
+uniform float AngleStart;
+uniform float AngleEnd;
+uniform vec2  Center;
+
+uniform vec4 Offset;
+
+varying vec4  baseColor;
+varying float Phase;
+varying float FreqTwoPi;
+
+void main()
+{
+    /* Query current output texel position: */
+    vec2 pos = gl_TexCoord[0].xy;
+
+    /* Compute the distance and angle (in radians) from the center: */
+    vec2 relativePos = pos - Center;
+    float radius = length(relativePos);
+    float angle = degrees(atan(relativePos.y, relativePos.x));  // Convert angle to degrees
+
+    /* Normalize angle to be between 0 and 360 degrees */
+    if (angle < 0.0) {
+        angle += 360.0;
+    }
+
+    /* If distance to center (aka radius of pixel) > Radius, discard this pixel: */
+    if (radius > Radius) discard;
+
+    /* If angle is outside the range [AngleStart, AngleEnd], discard this pixel: */
+    if (angle < AngleStart || angle > AngleEnd) discard;
+
+    /* Evaluate sine grating at requested position, frequency and phase: */
+    float sv = sin(pos.x * FreqTwoPi + Phase);
+
+    /* Multiply/Modulate base color and alpha with calculated sine            */
+    /* values, add some constant color/alpha Offset, assign as final fragment */
+    /* output color: */
+    gl_FragColor = (baseColor * sv) + Offset;
+}

@@ -1,5 +1,5 @@
 function [task, frameCounter, vbl] = my_stim(my_key, scr,const,expDes, task, frameCounter, trialID, vbl)
-
+phase=0;
 try
     trialType = expDes.trialMat(trialID,2); % 0=baseline, 1=static, 2=motion
 
@@ -8,8 +8,10 @@ try
         %tic
         if trialType==1 
             angle = const.maporientation(expDes.trialMat(trialID,3)); % 3rd column is orientation
+            sprintf('ORIENTATION %i', expDes.trialMat(trialID,3))
         elseif trialType==2
             angle = const.mapdirection(expDes.trialMat(trialID,4)); % 4th column is direction
+            sprintf('MOVING %i', expDes.trialMat(trialID,4))
         end
 
         movieDurationSecs=expDes.stimDur_s;   % Abort after 3 seconds.
@@ -19,7 +21,57 @@ try
 
         grating_halfw = const.grating_halfw;
         visiblesize = const.visiblesize;
+        
         gratingtex = const.gratingtex;
+        
+        if strcmp(const.expType, 'dgl')
+            if trialType==1 % static
+                phaseJump = 0; 
+                orientation = const.dglmaporientation(expDes.trialMat(trialID,3));
+            elseif trialType==2 % moving
+                phaseJump = 25; % always this way (unlike da)
+                orientation = const.dglmapdirection(expDes.trialMat(trialID,4));
+            end
+        elseif strcmp(const.expType, 'da')
+            if trialType==1 % static
+                phaseJump = 0; 
+            elseif trialType==2 % moving
+                if ismember(expDes.trialMat(trialID,4), [0, 45, 270, 315]) % if moving clockwise (includes inward)
+                    phaseSign = 1;
+                elseif ismember(expDes.trialMat(trialID,4), [90, 180, 135, 225]) % if movibg counterclockwise (includes outward)
+                    phaseSign = -1;
+                end
+                phaseJump = phaseSign*25; % this is only used for 'da'
+            end
+            virtualSize = const.grating_halfw*2;
+            frequency = const.stimSF_cpp; %0.02; % cycles/pixel (0.06)
+            middleRadius = virtualSize/2;
+            middlePerimeter = 2*pi*middleRadius; % pixels
+            % has to scale with eccentricity (half way point)
+            radialFrequency = (frequency*middlePerimeter / (2*pi))*.5;
+            % radial orientation (pinwheel)
+            if (trialType==1 && (expDes.trialMat(trialID,3) == 90)) || ...
+               (trialType==2 && (expDes.trialMat(trialID,4) == 0)) || ...
+               (trialType==2 && (expDes.trialMat(trialID,4) == 180))
+                circularFrequency = 0;
+            % tangential orientation (annulus)
+            elseif (trialType==1 && (expDes.trialMat(trialID,3) == 0)) || ...
+                (trialType==2 && (expDes.trialMat(trialID,4) == 90)) || ...
+                (trialType==2 && (expDes.trialMat(trialID,4) == 270))
+                radialFrequency = 0;
+                circularFrequency = frequency;
+            % oblique (spiral)
+            elseif (trialType==1 && (expDes.trialMat(trialID,3) == 135)) || ...
+               (trialType==2 && (expDes.trialMat(trialID,4) == 45)) || ...
+               (trialType==2 && (expDes.trialMat(trialID,4) == 225))
+                circularFrequency = -frequency; 
+            elseif (trialType==1 && (expDes.trialMat(trialID,3) == 45)) || ...
+               (trialType==2 && (expDes.trialMat(trialID,4) == 135)) || ...
+               (trialType==2 && (expDes.trialMat(trialID,4) == 315))
+                circularFrequency = frequency; 
+            end
+        end
+        
         maskOutertex = const.maskOutertex;
         maskInnertex = const.maskInnertex;
 
@@ -40,10 +92,15 @@ try
         %vbl=Screen('Flip', const.window);
         vblendtime = vbl + movieDurationSecs;
         %i=0;
-
+        
         if const.EL_mode, Eyelink('message', 'STIMULUS ONSET'); end
         % Animationloop:
         while (vbl < vblendtime)
+            
+            % just added
+            if strcmp(const.expType, 'dgl')
+                Screen('DrawTexture', const.window, const.pinknoiseTex, [], [], []);
+            end
 
             if task(frameCounter,1)==1
                 fixColor = const.lightgray;
@@ -53,7 +110,7 @@ try
 
             xoffset = mod(i*shiftperframe,const.stimSpeed_ppc);
 
-            if trialType==2   
+            if trialType==2 %&& strcmp(const.expType, 'dg')
                 i=i+1;
             end
 
@@ -62,12 +119,71 @@ try
             % Set the right blend function for drawing the gabors
             %Screen('BlendFunction', const.window, 'GL_ONE', 'GL_ZERO');
 
-            % Draw grating texture, rotated by "angle":
-            Screen('DrawTexture', const.window, gratingtex, srcRect, dstRect, angle, ...
-                [], [], [], [], []); %, propertiesMat');
-
+            if strcmp(const.expType, 'dg')
+                % Draw grating texture, rotated by "angle":
+                Screen('DrawTexture', const.window, gratingtex, srcRect, dstRect, angle, ...
+                    [], [], [], [], []); %, propertiesMat');
+            elseif strcmp(const.expType, 'da')
+                phase = phase + phaseJump;
+                angle = 0;
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect,...
+                    angle, [], [], [0.5 0.5 0.5 1], [], [],...
+                    [phase, radialFrequency, 0.5, -1, circularFrequency, 0, 0, 0]);
+                    % for LAST [] AUXILIARY PARAMS:
+                    % input3: contrast
+                    % input4: < 0 is a sinusoid.
+                    % input5: circular frequency
+            elseif strcmp(const.expType, 'dgl')
+                phase = phase + phaseJump; % phase = 0; 
+                baseColor = [0.5 0.5 0.5 1];
+                frequency = 0.02; contrast = 0.5;
+                
+                Screen('BlendFunction', const.window, 'GL_ONE', 'GL_ZERO');
+                % UVM position (angle = 0); 
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
+                    0, [], [], baseColor, [], [], ...
+                    [phase, frequency, contrast, orientation]);
+                
+                % UVM position (angle = 0); 
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
+                    45, [], [], baseColor, [], [], ...
+                    [phase, frequency, contrast, orientation]);
+                
+                % UVM position (angle = 0); 
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
+                    90, [], [], baseColor, [], [], ...
+                    [phase, frequency, contrast, orientation]);
+                
+                % UVM position (angle = 0); 
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
+                    135, [], [], baseColor, [], [], ...
+                    [phase, frequency, contrast, orientation]);
+                
+                % UVM position (angle = 0); 
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
+                    180, [], [], baseColor, [], [], ...
+                    [phase, frequency, contrast, orientation]);
+                
+                % UVM position (angle = 0); 
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
+                    225, [], [], baseColor, [], [], ...
+                    [phase, frequency, contrast, orientation]);
+                
+                % UVM position (angle = 0); 
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
+                    270, [], [], baseColor, [], [], ...
+                    [phase, frequency, contrast, orientation]);
+                
+                % UVM position (angle = 0); 
+                Screen('DrawTexture', const.window, gratingtex, [], dstRect, ...
+                    315, [], [], baseColor, [], [], ...
+                    [phase, frequency, contrast, orientation]);
+            end
+            
+            Screen('BlendFunction', const.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             % outer and inner masks
             Screen('DrawTexture', const.window, maskOutertex, [], [], []); %[0 0 scr.windX_px scr.windY_px], []);
+            Screen('BlendFunction', const.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             Screen('DrawTexture', const.window, maskInnertex, [], dstRect, []);
 
             % Change the blend function to draw an antialiased fixation point
