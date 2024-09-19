@@ -49,7 +49,7 @@ try
                 %phaseJump = phaseSign*25; % this is only used for 'da'
             end
             virtualSize = const.grating_halfw*2;
-            frequency = const.stimSF_cpp*2*pi; %0.025; % cycles/pixel (0.06)
+            frequency = const.stimSF_cpp; %0.025; % cycles/pixel (0.06)
             middleRadius = const.grating_halfw; %virtualSize/2;
             middlePerimeter = 2*pi*middleRadius; % circumference pixels
             % has to scale so that spatial frequency is computed for half a
@@ -62,13 +62,9 @@ try
             %radialFrequency = (((frequency*middlePerimeter / (2*pi)))) ./pi;
             %circularFrequency = ((radialFrequency/middleRadius) * (2*pi));
             
-            % the frequency must be converted to radians (2*pi)
-            % try multiplying ratio of (radius to circumference)
-            radialFrequency = (frequency*2*pi)/(2*middleRadius/middlePerimeter);
+            radialFrequency = (((frequency*middlePerimeter / (2*pi))));
+            circularFrequency = (((radialFrequency./pi)/middleRadius) * (2*pi));
             
-            % have to multiply by diameter virtualsize b/c distance it
-            % normalized from -0.5 to 0.5 in vert file
-            circularFrequency = frequency*2*pi*virtualSize; 
             
             % radial orientation (pinwheel)
             if (trialType==1 && (expDes.trialMat(trialID,3) == 90)) || ...
