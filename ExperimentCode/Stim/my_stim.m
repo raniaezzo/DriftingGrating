@@ -49,7 +49,7 @@ try
                 %phaseJump = phaseSign*25; % this is only used for 'da'
             end
             virtualSize = const.grating_halfw*2;
-            frequency = const.stimSF_cpp*2*pi; %0.025; % cycles/pixel (0.06)
+            frequency = const.stimSF_cpp; %0.025; % cycles/pixel (0.06)
             middleRadius = const.grating_halfw; %virtualSize/2;
             middlePerimeter = 2*pi*middleRadius; % circumference pixels
             % has to scale so that spatial frequency is computed for half a
@@ -64,11 +64,40 @@ try
             
             % the frequency must be converted to radians (2*pi)
             % try multiplying ratio of (radius to circumference)
-            radialFrequency = (frequency*2*pi)/(2*middleRadius/middlePerimeter);
+            %radialFrequency = (frequency*2*pi)/(middleRadius/middlePerimeter);
+            % converted to radians in frag
             
+            % new
+            % how many cycles in radius 
+            cycles_of_radius = const.stimSF_cpp*const.grating_halfw;
+            
+%             % multiple by ratio of radius to circumference
+%             cyclesAroundCircle = cycles_of_radius/(middleRadius/middlePerimeter); 
+%             
+%             %(areaRatio4halfDistance=25% -this is ALWAYS the ratio for area 
+%             % of a circle with half the radius)
+%             %note: cycles per unit area (in pixels), 
+%             %the spatial frequency you're seeing at half the radius 
+%             %is being compressed into a smaller area compared to the 
+%             %full circle, leading to the perception of a higher frequency.
+%             areaRatio4halfDistance = (pi*(middleRadius/2)^2)/(pi*(middleRadius)^2); % does same thing as below?
+%             distanceRelative2Radius = 0.5; % match half distance
+%             % MAYBE I NO LONGER HAVE TO SQUARE BECAUSE I FIXED THE RADIUS
+%             % TO DIAMETER
+%             radialFrequency = cyclesAroundCircle * distanceRelative2Radius^2; % or * areaRatio4halfDistance;
+            
+            cyclesAroundCircle = (cycles_of_radius*middlePerimeter)/middleRadius; 
+            distanceRelative2Radius = 0.5; % match half distance
+            radialFrequency = cycles_of_radius * distanceRelative2Radius^2; 
+            %(cyclesAroundCircle * distanceRelative2Radius^2 );
+
             % have to multiply by diameter virtualsize b/c distance it
             % normalized from -0.5 to 0.5 in vert file
-            circularFrequency = frequency*2*pi*virtualSize; 
+            % incorrectly converted to radians in frag so /2pi
+            circularFrequency = (cycles_of_radius/middleRadius); %/middleRadius;
+            %1/(cycles_of_radius);
+            %.5/(2*pi);
+            %(0.5*cycles_of_radius/middleRadius)
             
             % radial orientation (pinwheel)
             if (trialType==1 && (expDes.trialMat(trialID,3) == 90)) || ...
@@ -80,7 +109,6 @@ try
                 (trialType==2 && (expDes.trialMat(trialID,4) == 90)) || ...
                 (trialType==2 && (expDes.trialMat(trialID,4) == 270))
                 radialFrequency = 0;
-                %circularFrequency = frequency;
             % oblique (spiral)
             elseif (trialType==1 && (expDes.trialMat(trialID,3) == 135)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 45)) || ...

@@ -27,18 +27,19 @@ void main() {
     if ( radius > 0.0 ) {
       float dist = distance( pos, center );
         if ( dist > radius ) discard;
+        //if ( dist < 100.00 ) discard;
      }
 
     //Calculate the angle and radius from the center.
     float angleMatrix = atan(pos.y - radius, pos.x - radius);
-    float radiusMatrix = distance( pos, center );
+    float radiusMatrix = distance( pos, center ); // this is in pixels
 
-    if ( floor(radiusMatrix) == 0.0 ) {
-        radiusMatrix = 0.0000000000000000000000000001; //to avoid dividing by 0
-    }
+    float safeRadius = max(radiusMatrix, 0.001);
 
     //create our sinusoid in -1 to 1 range, radialFrequency need to be integer to avoid clipping effect
-    float sv = sin((floor(radialFrequency) * angleMatrix) + (circularFrequency / radiusMatrix) + phase);
+    //float sv = sin((floor(radialFrequency) * angleMatrix) + (radiusMatrix * circularFrequency) + phase);
+    //float sv = sin((floor(radialFrequency) * angleMatrix) + (radiusMatrix * (radiusMatrix /radius) * circularFrequency) + phase);
+    float sv = sin((floor(radialFrequency) * angleMatrix) + (sqrt(radiusMatrix/radius) * radius * circularFrequency) + phase);
 
     //if sigma >= 0, we want a squarewave grating, step or smoothstep does this depending on sigma value
     if ( sigma == 0.0 ) {

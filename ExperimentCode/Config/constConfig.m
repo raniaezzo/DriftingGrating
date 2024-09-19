@@ -57,14 +57,13 @@ if strcmp(const.expType, 'dg')
     %gratingtex(:,:,2) = grating.*const.contrast;
     const.gratingtex=Screen('MakeTexture', const.window, gratingtex);
 elseif strcmp(const.expType, 'da')
-    virtualSize = const.grating_halfw; %512;
-    const.gratingtex= CreateProceduralPolarGrating(const.window, const.grating_halfw, const.grating_halfw,...
+    virtualSize = const.grating_halfw*2; %512;
+    const.gratingtex= CreateProceduralPolarGrating(const.window, virtualSize, virtualSize,...
 	 [1 1 1], [0 0 0], floor(virtualSize / 2));
 elseif strcmp(const.expType, 'dgl')
     virtualSize = const.grating_halfw*2; %512;
     radius = const.grating_halfw; %400;
-    anglestart = 67.5; %70; 
-    angleend = 112.5; %110;
+    anglestart = 70; angleend = 110;
     orientation = 45;
     const.gratingtex= CreateProceduralSineWedge(const.window, virtualSize, virtualSize,...
 	 [.5 .5 .5 1], radius, anglestart, angleend, orientation);
@@ -131,8 +130,8 @@ for ii = 1:imsize
 %             end
 
             paPositions = [0, 45, 90, 135, 180, -180, -135, -90, -45]; %0:45:315;
-            setminEdges = paPositions-22.5; 
-            setmaxEdges = paPositions+22.5;
+            setminEdges = paPositions-22; 
+            setmaxEdges = paPositions+22;
             
             for angcomp=setminEdges
                 innerEdge = angcomp+angleRampSize; % start of ramp from 0
