@@ -113,13 +113,13 @@ try
             elseif (trialType==1 && (expDes.trialMat(trialID,3) == 135)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 45)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 225))
-                radialFrequency = radialFrequency/2; 
-                circularFrequency = -circularFrequency/2;
+                radialFrequency = radialFrequency; %/2; 
+                circularFrequency = -circularFrequency; %/2;
             elseif (trialType==1 && (expDes.trialMat(trialID,3) == 45)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 135)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 315))
-                radialFrequency = radialFrequency/2;    
-                circularFrequency = circularFrequency/2; 
+                radialFrequency = radialFrequency; %/2;    
+                circularFrequency = circularFrequency; %/2; 
             end
         end
         
