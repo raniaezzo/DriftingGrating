@@ -38,8 +38,7 @@ void main()
     phase = deg2rad * auxParameters0[0];
 
     /* radialfrequency is stored in auxParameters0[1] */
-    radialFrequency = auxParameters0[1]; 
-    // * twopi;
+    radialFrequency = auxParameters0[1] * twopi;
 
     /* Contrast value is stored in auxParameters0[2]: */
     contrast = auxParameters0[2];
@@ -48,8 +47,7 @@ void main()
     sigma = auxParameters0[3];
 
     /* circularFrequency is stored in auxParameters1[0] */
-    circularFrequency = auxParameters1[0]; 
-    // * twopi;
+    circularFrequency = auxParameters1[0] * twopi;
 
     /* base colour */
     baseColor = modulateColor.rgb;

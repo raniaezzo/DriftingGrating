@@ -48,43 +48,56 @@ try
                 % phaseSign in while loop
                 %phaseJump = phaseSign*25; % this is only used for 'da'
             end
+            virtualSize = const.grating_halfw*2;
+            frequency = const.stimSF_cpp; %0.025; % cycles/pixel (0.06)
+            middleRadius = const.grating_halfw; %virtualSize/2;
+            middlePerimeter = 2*pi*middleRadius; % circumference pixels
+            % has to scale so that spatial frequency is computed for half a
+            % circle - more analagous to definine SF in X-dimension only
+            % the 2 pi division normalizes to unit circle
+            % the ./3 scaling was done using screenshots to approximate
+            % equal SF between the cartesian and polar grating
+            % but ultimately I changed the term to pi b/c ratio of radius
+            % to have circumference is 1/pi
+            %radialFrequency = (((frequency*middlePerimeter / (2*pi)))) ./pi;
+            %circularFrequency = ((radialFrequency/middleRadius) * (2*pi));
+            
+            % the frequency must be converted to radians (2*pi)
+            % try multiplying ratio of (radius to circumference)
+            %radialFrequency = (frequency*2*pi)/(middleRadius/middlePerimeter);
+            % converted to radians in frag
+            
+            % new
+            % how many cycles in radius 
+            cycles_of_radius = const.stimSF_cpp*const.grating_halfw;
+            
+%             % multiple by ratio of radius to circumference
+%             cyclesAroundCircle = cycles_of_radius/(middleRadius/middlePerimeter); 
+%             
+%             %(areaRatio4halfDistance=25% -this is ALWAYS the ratio for area 
+%             % of a circle with half the radius)
+%             %note: cycles per unit area (in pixels), 
+%             %the spatial frequency you're seeing at half the radius 
+%             %is being compressed into a smaller area compared to the 
+%             %full circle, leading to the perception of a higher frequency.
+%             areaRatio4halfDistance = (pi*(middleRadius/2)^2)/(pi*(middleRadius)^2); % does same thing as below?
+%             distanceRelative2Radius = 0.5; % match half distance
+%             % MAYBE I NO LONGER HAVE TO SQUARE BECAUSE I FIXED THE RADIUS
+%             % TO DIAMETER
+%             radialFrequency = cyclesAroundCircle * distanceRelative2Radius^2; % or * areaRatio4halfDistance;
+            
+            cyclesAroundCircle = (cycles_of_radius*middlePerimeter)/middleRadius; 
+            distanceRelative2Radius = 0.5; % match half distance
+            radialFrequency = cycles_of_radius * distanceRelative2Radius^2; 
+            %(cyclesAroundCircle * distanceRelative2Radius^2 );
 
-            
-            % new way to compute circularFrequency & radialFrequency
-            
-            % To define base frequency for pinwheel so that it is 1 cpd:
-            % this is just to be roughly equal to the other grating
-            % protocol, but since the SF is scaled with eccentricity, using
-            % the midpoint of the radius as a reference:
-            
-            % perimeter at this midpoint is = 2 * pi * r / 2
-            perimeterHalfRadius_px = const.grating_halfw * pi; % pixels
-            
-            % how many degrees long is the circumference of circle radius/2
-            perimeterHalfRadius_deg = round(perimeterHalfRadius_px / vaDeg2pix(1, scr));
-           
-            % Number of cycles around circle: to make the radialFreq ~ 1 cycle per deg
-            % this is already in radians
-            radialFrequency = perimeterHalfRadius_deg; % b/c converted again
-            %radialFrequency = radialFrequency*(6/42); % just for testing
-            %relative to prior publications (BB)
-            
-            
-            % radians per unit (e.g., log or linear unit) - 
-            % small number b/c it's how much of the cycle transverses a
-            % unit (pixels):
-            % first convert to radia
-            %circularFrequency = (radialFrequency*2*pi)/(const.grating_halfw/2); % divide by 2*pi again
-            
-            % the circular frequency has to be in radians per pixel
-            % (in other words, cycle per pixel for a unit increase in
-            % radius)
-            
-            % radians per pixel
-            radiansPerpixel = (2*pi)/(const.grating_halfw/2);
-            
-            % radial frequency is now in radians per pixel (requires for shader)
-            circularFrequency = (radialFrequency)*radiansPerpixel;
+            % have to multiply by diameter virtualsize b/c distance it
+            % normalized from -0.5 to 0.5 in vert file
+            % incorrectly converted to radians in frag so /2pi
+            circularFrequency = (cycles_of_radius/middleRadius); %/middleRadius;
+            %1/(cycles_of_radius);
+            %.5/(2*pi);
+            %(0.5*cycles_of_radius/middleRadius)
             
             % radial orientation (pinwheel)
             if (trialType==1 && (expDes.trialMat(trialID,3) == 90)) || ...
@@ -97,19 +110,16 @@ try
                 (trialType==2 && (expDes.trialMat(trialID,4) == 270))
                 radialFrequency = 0;
             % oblique (spiral)
-            % these require dividing by (sqrt(2)) which comes from
-            % simplifying pythagorean theoerum to soolev for euclidean
-            % distance (diagonal)- check Broderick paper
             elseif (trialType==1 && (expDes.trialMat(trialID,3) == 135)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 45)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 225))
-                radialFrequency = radialFrequency/(sqrt(2)); 
-                circularFrequency = -circularFrequency/(sqrt(2));
+                radialFrequency = radialFrequency; %/2; 
+                circularFrequency = -circularFrequency; %/2;
             elseif (trialType==1 && (expDes.trialMat(trialID,3) == 45)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 135)) || ...
                (trialType==2 && (expDes.trialMat(trialID,4) == 315))
-                radialFrequency = radialFrequency/(sqrt(2));    
-                circularFrequency = circularFrequency/(sqrt(2)); 
+                radialFrequency = radialFrequency; %/2;    
+                circularFrequency = circularFrequency; %/2; 
             end
         end
         

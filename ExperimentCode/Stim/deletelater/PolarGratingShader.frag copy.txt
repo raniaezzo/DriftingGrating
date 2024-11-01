@@ -36,23 +36,11 @@ void main() {
 
     float safeRadius = max(radiusMatrix, 0.001);
 
-    float logRadius = log(radiusMatrix);
-    float r_min = 0.001;
-    float r_max = radius;
-    float logMin = log(r_min);
-    float logMax = log(r_max);
-
-
-    // map back to original range
-    float logScaledR = (logRadius - log(r_min)) * (r_max - r_min) / (log(r_max) - log(r_min)) + r_min;
-
     //create our sinusoid in -1 to 1 range, radialFrequency need to be integer to avoid clipping effect
     //float sv = sin((floor(radialFrequency) * angleMatrix) + (radiusMatrix * circularFrequency) + phase);
     //float sv = sin((floor(radialFrequency) * angleMatrix) + (radiusMatrix * (radiusMatrix /radius) * circularFrequency) + phase);
     //float sv = sin((floor(radialFrequency) * angleMatrix) + (log(radiusMatrix/radius) * radius * circularFrequency) + phase);
-    //float sv = sin((floor(radialFrequency) * angleMatrix) + (sqrt(radiusMatrix/radius) * radius * circularFrequency) + phase);
-    float sv = sin((floor(radialFrequency) * angleMatrix) + (logScaledR * circularFrequency) + phase);
-
+    float sv = sin((floor(radialFrequency) * angleMatrix) + (sqrt(radiusMatrix/radius) * radius * circularFrequency) + phase);
 
     //if sigma >= 0, we want a squarewave grating, step or smoothstep does this depending on sigma value
     if ( sigma == 0.0 ) {
