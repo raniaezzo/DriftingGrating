@@ -16,8 +16,8 @@ KbName('UnifyKeyNames')
 % Initialization
 warning('off');        % do not print warnings
 const.expType = 'da'; % dg=drifting grating;da=drifting annulus,'dgl'=drifting grating local
-const.DEBUG = 0;       % if debug==1, vPixx and eyetracking off
-const.EL_mode = 1;     % will later be forced to 0 if const.DEBUG = 1
+const.DEBUG = 0; %0;       % if debug==1, vPixx and eyetracking off
+const.EL_mode = 1; %1;     % will later be forced to 0 if const.DEBUG = 1
 
 % Try to find correct path:
 dir = (which('expLauncher'));  % find main script

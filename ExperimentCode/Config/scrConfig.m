@@ -62,6 +62,11 @@ if ~computerDetails.windows
             scr.experimenter = 'NYUADScanner';
             scrX_mm = 720; scrY_mm = 405;
             scr.scrViewingDist_cm = 83.5; %88;
+            
+            % make instructions BIG so operator can see
+            const.text_size = 40;
+            const.text_font = 'Abadi MT Condensed Extra Bold';
+            
             disp('ACCOUNTING FOR SCALING OFFSET BETWEEN PROJECTED IMAGE AND DISPLAY')
             scr.maxDiam_percent = 0.888; 
             yOffset_percent = 0.9136;
@@ -138,6 +143,7 @@ if const.vpixx == 1
     Datapixx('StopAllSchedules');
     Datapixx('RegWrRd');    % Synchronize DATAPixx registers to local register cache
 end
+
 
 PsychDefaultSetup(2); % assert OpenGL, setup unifiedkeys and unit color range
 PsychImaging('PrepareConfiguration'); % First step in starting pipeline
