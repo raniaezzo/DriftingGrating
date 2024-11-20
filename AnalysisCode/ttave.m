@@ -1,4 +1,4 @@
-function ttave(matrices,datafiles, surfaceROI, tr_s, stimlength)
+function ttave(matrices,datafiles, surfaceROI, tr_s, stimlength, subj)
 
 % cardinal motion
 % cardinal static
@@ -8,7 +8,8 @@ function ttave(matrices,datafiles, surfaceROI, tr_s, stimlength)
 % then plot baseline
 
 padding = 10; % TRs
-trialcut = 12; % TRs
+eventTRs_after = 20; % TRs
+eventTRs_prior = 5;
 
 % initialize matrices for each event type: c_motion, o_motion, c_static,
 % o_static, blank
@@ -43,7 +44,15 @@ for mi=1:length(matrices)
         idxStart1 = idx1(1:stimlength:end,:); % every third element (to get stim start)
     
         for ti=1:length(idxStart1)
-            trial = df_roi(idxStart1(ti):idxStart1(ti)+trialcut-1);
+
+            try
+                % start -5 TRs before event
+                trial = df_roi(idxStart1(ti)-eventTRs_prior:idxStart1(ti)+eventTRs_after-1);
+            catch
+                disp('last trial') % adding extra nans for the trial at the very end b/c eventTRs_after is too long
+                trial = df_roi(idxStart1(ti)-eventTRs_prior:end);
+                trial = [trial, nan(1,eventTRs_prior+eventTRs_after-length(trial))];
+            end
 
             if (ci <= 4)
                 cMotion = [cMotion ; trial];
@@ -53,7 +62,7 @@ for mi=1:length(matrices)
                 cStatic = [cStatic ; trial];
             elseif (ci <=12) && (ci > 10)
                 oStatic = [oStatic ; trial];
-            elseif ci <=13
+            elseif ci ==13
                 blank = [blank ; trial];
             end
 
@@ -62,27 +71,6 @@ for mi=1:length(matrices)
 
 end
 
-figure
-shift = 0; %mean(base,'all');
-plot(mean(cMotion)-shift, 'b-', 'Linewidth',2, 'Color', [127, 191, 123]/255)
-hold on
-plot(mean(oMotion)-shift, '-', 'Linewidth',2, 'Color', [175, 141, 195]/255)
-hold on
-plot(mean(cStatic)-shift, ':', 'Linewidth',2, 'Color', [127, 191, 123]/255)
-hold on
-plot(mean(oStatic)-shift, ':', 'Linewidth',2, 'Color', [175, 141, 195]/255)
-hold on
-plot(mean(blank)-shift, 'k', 'Linewidth',2, 'Color', [175, 175, 175]/255)
-hold on
-yline(mean(base,'all')-shift, '--')
-title(sprintf('Trial triggered average'))
-xlim([1, 12])
-xlabel('Time (TR)')
-ylabel('% Signal Change')
-ax = gca;
-ax.FontSize = 14;
-legend({'Cardinal Motion', 'Oblique Motion', 'Cardinal Static', 'Oblique Static', 'Blank', 'Baseline'}, 'Location', 'southwest')
 
-disp('end')
 
 end

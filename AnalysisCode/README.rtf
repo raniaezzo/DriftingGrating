@@ -1,0 +1,95 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2580
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww16140\viewh12160\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs36 \cf0 #README: Drifting Grating \
+\
+TO DO:\
+-double check that the y is not flipped, output from PRF VISTA\
+-add a path direct (for sawtooth) in DG pipeline\
+-Figure out if radial is defined correctly.\
+\
+Description of scripts in DriftingGrating Folder:\
+\
+main_singlesub.m : script that processes a single subject\'92s drifting grating data, by loading fMRIprep func output, the design files from the experiment, runs GLM, and then saves output. Also plots the trial triggered average. It saves a bunch of contrast maps to derivatives folder called dgGLM.\
+\
+		setup_user() : adds a bunch of dependencies to the path, including free surfer.\
+\
+		format_desmats() : formats the design matrices from the experiment into a maxtrix for GLM\
+\
+		addnuissancemats() : adds nuisance regressors from the fMRIprep output to the GLM matrix\
+\
+		load_data() : loads the files functional data from fMRIprep folder\
+\
+		get_surfsize() : gets the surface size of a subject\'92s free surfer cortex\
+\
+		getROIidxs : gets the indices of the ROI\
+\
+		GLMestimatemodel() : runs the GLM model using Kendrick Kay\'92s GLMdenoise\
+\
+		ttave() : plot trial triggered average\
+\
+		calculateBeta() : another method of GLM (manual for sanity)\
+\
+		writeMGZfile() : writes the mgz\
+\
+\
+meanWithinLabel.m : organizes data into gigantic matrices:\
+	(1) meanBOLD (contrasts, rows, subjects),\
+	(2) meanBOLDpa (contrasts , polar angle bin, roi , subjects), \
+	(3) allvoxelsBOLDpa (contrasts, polar angle bin, roi, subjects),\
+	(4) allparamsBOLDpa (contrasts, polar angle bin, roi, PARAM, subjects), \
+	where	param==1 is polar angle value\
+			param==2 is eccentricity\
+			param==3 is r^2 \
+			param==4 (THIS IS INCORRECT DO NOT USE) - polar angle magnitude\
+\
+		read_label() : free surfer function\
+\
+\
+boldHistograms.m : \
+\
+		map_theta() : converts Benson atlas polar angle units (0 to +-180; 0 as UVM and +90 being right visual field) to conventional units (0 to 360 starting from RHM going counterclockwise)\
+\
+\
+prepareModelFit.m : \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 ~~~~~\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+Description of scripts in reToolbox Folder:\
+\
+arithMGZ() : performs any arithmetic operations across MGZs.\
+\
+compare_vexp() : compares variance explained across retinotopy procedures.\
+\
+createmask() : Boolean mask\
+\
+proj2visualfield() : project pRFs to get the visual field coverage\
+\
+		calculate_vf_coverage() : \
+\
+		display_vf_coverage() : \
+\
+		create2DGaussian() : \
+\
+retrieve_sesname() : for a given subject / project, get the session name (useful for when retrieving files across subjects within a loop).\
+\
+takesnapshots() : snapshots of one or more surface / with ROIs\
+\
+volumeBool2Surf() : surface voxels\
+\
+~~~~~\
+\
+SCRAP (DELETE LATER IF UNUSED):\
+\
+- main.m()\
+- view_fv.m()\
+- view_maps()\
+- visualize()\
+- visualize_results_flatmaps()\
+}

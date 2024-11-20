@@ -1,0 +1,207 @@
+{
+    "contrasts": [
+        {
+            "dg_contrast_name": "cardMsep",
+            "da_contrast_name": "polcardMsep",
+            "index": 1,
+            "dg_description": "Pairwise motion - orientation for cardinal then averaged together (e.g., upward motion - horizontal orientation)",
+	    "da_description": "Pairwise motion - orientation for polar cardinal (e.g., outward motion - annulus orientation)"
+        },
+        {
+            "dg_contrast_name": "oblMsep",
+            "da_contrast_name": "polobliMsep",
+            "index": 2,
+            "dg_description": "Pairwise motion - orientation for oblique then averaged together (e.g., upper rightwards motion - upper leftwards orientated grating)",
+	    "da_description": "Pairwise motion - orientation for spiral then averaged together (e.g., upper rightwards spiral motion - upper leftwards spiral orientated grating)"
+        },
+        {
+            "dg_contrast_name": "allmValls",
+            "da_contrast_name": "allmValls",
+            "index": 3,
+            "dg_description": "Mean of all 8 translating directions - mean of all 4 orientations",
+	    "da_description": "Mean of all 8 in/out/spiral directions - mean of all 4 annuli/spiral/pinwheel orientations"
+        },
+        {
+            "dg_contrast_name": "allsVblank",
+            "da_contrast_name": "allsVblank",
+            "index": 4,
+            "dg_description": "Mean of all 4 orientations - blank trial (pink noise)",
+	    "da_description": "Mean of all 4 annuli/spiral/pinwheel orientations - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "allmVblank",
+            "da_contrast_name": "allmVblank",
+            "index": 5,
+            "dg_description": "Mean of all 8 translating directions - blank trial (pink noise)",
+	    "da_description": "Mean of all 8 in/out/spiral directions - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "cardmVblank",
+            "da_contrast_name": "polcardmVblank",
+            "index": 6,
+            "dg_description": "Cardinal translating (up, down, left, right) motions averaged - blank trial (pink noise)",
+	    "da_description": "Polar cardinal (in, out, c, cc) motions averaged - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "oblmVblank",
+            "da_contrast_name": "poloblmVblank",
+            "index": 7,
+            "dg_description": "Oblique translating (upper right, upper left, lower right, lower left) motions averaged - blank trial (pink noise)",
+	    "da_description": "Polar oblique (spiral) motion averaged - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m0_v_s90",
+            "da_contrast_name": "mclock_v_spinwheel",
+            "index": 8,
+            "dg_description": "Rightwards translating motion - vertical orientation",
+	    "da_description": "Clockwise rotating motion - pinwheel orientation"
+        },
+        {
+            "dg_contrast_name": "m90_v_s0",
+            "da_contrast_name": "mout_v_sannulus",
+            "index": 9,
+            "dg_description": "Upwards translating motion - horizontal orientation",
+	    "da_description": "Outwards radial motion - annulus orientation"
+        },
+        {
+            "dg_contrast_name": "m180_v_s90",
+            "da_contrast_name": "mcclock_v_spinwheel",
+            "index": 10,
+            "dg_description": "Leftwards translating motion - vertical orientation",
+	    "da_description": "Counterclockwise rotating motion - pinwheel orientation"
+        },
+        {
+            "dg_contrast_name": "m270_v_s0",
+            "da_contrast_name": "min_v_sannulus",
+            "index": 11,
+            "dg_description": "Downwards translating motion - horizontal orientation",
+	    "da_description": "Inwards radial motion - annulus orientation"
+        },
+        {
+            "dg_contrast_name": "m45_v_s135",
+            "da_contrast_name": "moutclock_v_sccspiral",
+            "index": 12,
+            "dg_description": "Upper rightwards translating motion - upper leftwards orientation",
+	    "da_description": "Outer clockwise spiral motion - counter clockwise spiral orientation"
+        },
+        {
+            "dg_contrast_name": "m135_v_s45",
+            "da_contrast_name": "moutcclock_v_scspiral",
+            "index": 13,
+            "dg_description": "Upper leftwards translating motion - upper rightward orientation",
+	    "da_description": "Outer counterclockwise spiral motion - clockwise spiral orientation"
+        },
+        {
+            "dg_contrast_name": "m225_v_s135",
+            "da_contrast_name": "mincclock_v_sccspiral",
+            "index": 14,
+            "dg_description": "Lower leftwards translating motion - upper leftwards orientation",
+	    "da_description": "Inner counterclockwise spiral motion - counter clockwise spiral orientation"
+        },
+        {
+            "dg_contrast_name": "m315_v_s45",
+            "da_contrast_name": "mincclock_v_scspiral",
+            "index": 15,
+            "dg_description": "Lower rightwards translating motion - upper rightward orientation",
+	    "da_description": "Inner counterclockwise spiral motion - clockwise spiral orientation"
+        },
+        {
+            "dg_contrast_name": "cardsVblank",
+            "da_contrast_name": "polcardsVblank",
+            "index": 16,
+            "dg_description": "Average of horizontal / vertical orientations - blank trial (pink noise)",
+	    "da_description": "Average of pinwheel / annuli orientations - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "oblsVblank",
+            "da_contrast_name": "poloblsVblank",
+            "index": 17,
+            "dg_description": "Average of 2 oblique orientations - blank trial (pink noise)",
+	    "da_description": "Average of 2 spiral orientations - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m0_v_b",
+            "da_contrast_name": "mclock_v_b",
+            "index": 18,
+            "dg_description": "Rightwards translating motion - blank trial (pink noise)",
+	    "da_description": "Clockwise rotating motion - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m180_v_b",
+            "da_contrast_name": "mcclock_v_b",
+            "index": 19,
+            "dg_description": "Leftwards translating motion - blank trial (pink noise)",
+	    "da_description": "Counterclockwise rotating motion - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m90_v_b",
+            "da_contrast_name": "mout_v_b",
+            "index": 20,
+            "dg_description": "Upwards translating motion - blank trial (pink noise)",
+	    "da_description": "Outwards radial motion - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m270_v_b",
+            "da_contrast_name": "min_v_sannulus",
+            "index": 21,
+            "dg_description": "Downwards translating motion - blank trial (pink noise)",
+	    "da_description": "Inwards radial motion - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m45_v_b",
+            "da_contrast_name": "moutclock_v_b",
+            "index": 22,
+            "dg_description": "Upper rightwards translating motion - blank trial (pink noise)",
+	    "da_description": "Outer clockwise spiral motion - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m225_v_b",
+            "da_contrast_name": "mincclock_v_b",
+            "index": 23,
+            "dg_description": "Lower leftwards translating motion - blank trial (pink noise)",
+	    "da_description": "Inner counterclockwise spiral motion - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m135_v_b",
+            "da_contrast_name": "moutcclock_v_b",
+            "index": 24,
+              "dg_description": "Upper leftwards translating motion - blank trial (pink noise)",
+	    "da_description": "Outer counterclockwise spiral motion - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "m315_v_b",
+            "da_contrast_name": "mincclock_v_b",
+            "index": 25,
+            "dg_description": "Lower rightwards translating motion - blank trial (pink noise)",
+	    "da_description": "Inner counterclockwise spiral motion - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "s0_v_b",
+            "da_contrast_name": "sannulus_v_b",
+            "index": 26,
+            "dg_description": "Horizontal orientation - blank trial (pink noise)",
+	    "da_description": "Annulus orientation - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "s90_v_b",
+            "da_contrast_name": "spinwheel_v_b",
+            "index": 27,
+            "dg_description": "Vertical orientation - blank trial (pink noise)",
+	    "da_description": "Pinwheel orientation - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "s45_v_b",
+            "da_contrast_name": "scspiral_v_b",
+            "index": 28,
+            "dg_description": "Upper rightward orientation - blank trial (pink noise)",
+	    "da_description": "Clockwise spiral orientation - blank trial (pink noise)"
+        },
+        {
+            "dg_contrast_name": "s135_v_b",
+            "da_contrast_name": "sccspiral_v_b",
+            "index": 29,
+            "dg_description": "Upper leftwards orientation - blank trial (pink noise)",
+	    "da_description": "Counter clockwise spiral orientation - blank trial (pink noise)"
+        }
+    ]
+}

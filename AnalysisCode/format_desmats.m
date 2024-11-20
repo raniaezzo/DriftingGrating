@@ -1,4 +1,4 @@
-function designfiles = format_desmats(bidsDir, designDir, sub, ses, TR_s)
+function [designfiles,dg_id, dg_numID, run] = format_desmats(bidsDir, designDir, sub, TR_s)
 
     designfiles = {};
 
