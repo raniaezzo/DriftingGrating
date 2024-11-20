@@ -50,13 +50,25 @@ const.visiblesize=2*const.grating_halfw+1;
 x = meshgrid(-const.grating_halfw:const.grating_halfw + const.stimSF_ppc, 1);
 signal=0.5 + 0.5.*cos(const.stimSF_radians*x);
 signal = signal.*0.5+0.25; % new
-gratingtex = repmat(signal, [length(signal),1]);
-%gratingtex(:,:,1) = grating;
-%gratingtex(:,:,2) = grating.*const.contrast;
-const.gratingtex=Screen('MakeTexture', const.window, gratingtex);
 
-% const.gratingtex = CreateProceduralGabor(const.window, scr.windX_px, scr.windY_px, [],...
-%     [0.5 0.5 0.5 0.0], 1, 0.5);
+if strcmp(const.expType, 'dg')
+    gratingtex = repmat(signal, [length(signal),1]);
+    %gratingtex(:,:,1) = grating;
+    %gratingtex(:,:,2) = grating.*const.contrast;
+    const.gratingtex=Screen('MakeTexture', const.window, gratingtex);
+elseif strcmp(const.expType, 'da')
+    virtualSize = const.grating_halfw*2; %512;
+    const.gratingtex= CreateProceduralPolarGrating(const.window, virtualSize, virtualSize,...
+	 [1 1 1], [0 0 0], floor(virtualSize / 2));
+elseif strcmp(const.expType, 'dgl')
+    virtualSize = const.grating_halfw*2; %512;
+    radius = const.grating_halfw; %400;
+    anglestart = 70; angleend = 110;
+    orientation = 45;
+    const.gratingtex= CreateProceduralSineWedge(const.window, virtualSize, virtualSize,...
+	 [.5 .5 .5 1], radius, anglestart, angleend, orientation);
+
+end
 
 filterparam = const.stimRadius_ypix; % for circular aperature diam
 
@@ -79,9 +91,10 @@ maskOuter = cat(3, background, background);
 imsize = filterparam*2+1;
 
 [x, y] = meshgrid(-imsize/2+0.5:imsize/2-0.5, -imsize/2+0.5:imsize/2-0.5);
-[~, r] = cart2pol(x,y);
+[pa, r] = cart2pol(x,y);
 
 alpha = zeros(imsize,imsize);
+alpha2 = zeros(imsize,imsize);
 
 inner_radius = filterparam - const.stimCosEdge_pix; % 384 - 177 (or 44)
 outer_radius = filterparam;
@@ -93,6 +106,7 @@ aa = r - inner_radius;
 test = aa(aa < outer_radius-inner_radius);
 test = test(test > inner_radius-inner_radius);
 maxR = max(test); minR = min(test);
+angleRampSize = 10;
 
 for ii = 1:imsize
     for jj = 1:imsize
@@ -107,21 +121,63 @@ for ii = 1:imsize
         else
             alpha(ii,jj) = 1;
         end
+        
+        % now further modify if I need radial edges (for DGL)
+        if strcmp(const.expType, 'dgl')
+            
+%             if rad2deg(pa(ii,jj)) < -90 && rad2deg(pa(ii,jj)) > -135
+%                 alpha2(ii,jj) = 1;
+%             end
+
+            paPositions = [0, 45, 90, 135, 180, -180, -135, -90, -45]; %0:45:315;
+            setminEdges = paPositions-22; 
+            setmaxEdges = paPositions+22;
+            
+            for angcomp=setminEdges
+                innerEdge = angcomp+angleRampSize; % start of ramp from 0
+                try 
+                    if rad2deg(pa(ii, jj)) >= angcomp && rad2deg(pa(ii, jj)) <= innerEdge
+                        dist = innerEdge - rad2deg(pa(ii, jj)); %-angcomp;
+                        pick = dist / angleRampSize *1000; % not sure about this
+                        choose = round(pick);
+                        alpha2(ii,jj) = cosY(choose+1);
+                    end
+                catch
+                    disp('problem')
+                end
+                
+                for angcomp2=setmaxEdges
+                    innerEdge = angcomp2-angleRampSize; % start of ramp from 0
+                    try 
+                        if rad2deg(pa(ii, jj)) <= angcomp2 && rad2deg(pa(ii, jj)) >= innerEdge
+                            dist = rad2deg(pa(ii, jj)) - innerEdge; %-angcomp;
+                            pick = dist / angleRampSize *1000; % not sure about this
+                            choose = round(pick);
+                            alpha2(ii,jj) = cosY(choose+1);
+                        end
+                    catch
+                        disp('problem')
+                    end
+                end
+            end
+        end
     end
 end
+
+alpha = max(alpha,alpha2); %alpha2; %(alpha + alpha2) ./2;
 
 [aRows, aCols] = size(alpha);
 addcols = repmat([1], [aRows, round((finalX-(aCols))/2),1]);
 alpha = [addcols, alpha, addcols];
 [aRows, aCols] = size(alpha);
-
 if strcmp(scr.experimenter, 'NYUADScanner') ||  strcmp(scr.experimenter, 'Rania') % account for projector offset at NYUAD
     totalmissingRows = round(finalY-(aRows));
-    topMissing = totalmissingRows*(0.5/4.5);
+    topMissing = totalmissingRows*(.5/4.5);
     bottomMissing = totalmissingRows*(4/4.5);
     addrowsTop = repmat([1], [round(topMissing), aCols,1]);
     addrowsBottom = repmat([1], [round(bottomMissing), aCols,1]);
-    alpha = [alpha; addrowsTop; addrowsBottom];
+    alpha = [addrowsTop; alpha; addrowsBottom];
+    disp('CORRECTING FOR OFFSET')
 else
     addrows = repmat([1], [round((finalY-(aRows))/2), aCols,1]);
     alpha = [addrows; alpha; addrows];
@@ -215,6 +271,10 @@ const.maporientation = containers.Map(orientationids,ptborientation);
 
 directionids = 0:45:315; ptbdirection = {180, 135, 90, 45, 0, 315, 270, 225};
 const.mapdirection = containers.Map(directionids,ptbdirection);
+
+% for the dgl (totally arbitrary mapping)
+const.dglmaporientation = containers.Map(0:45:135,{90, 45, 0, 135});
+const.dglmapdirection = containers.Map(0:45:315,{180, 135, 90, 45, 0, 315, 270, 225});
 
 %% Saving procedure :
 

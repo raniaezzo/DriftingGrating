@@ -61,7 +61,10 @@ switch command
         Eyelink('Command', 'file_sample_data = LEFT,RIGHT,GAZE,AREA');
         Eyelink('Command', 'calibration_type = HV5');
         %Eyelink('Command', 'enable_automatic_calibration = YES');
-        %Eyelink('Command', 'calibration_area_proportion = 0.5 0.5');
+        Eyelink('Command', 'calibration_area_proportion 0.5 0.5'); % 0.83 0.88
+        Eyelink('Command', 'validation_area_proportion 0.5 0.5'); % 0.83 0.88
+        
+        Eyelink('Command', 'sample_rate = 1000');
         
         [~, vs] = Eyelink('GetTrackerVersion');
         fprintf('\nRunning experiment on a %s tracker.\n', vs );

@@ -1,0 +1,50 @@
+uniform float Radius;
+uniform float AngleStart;
+uniform float AngleEnd;
+uniform vec2  Center;
+uniform vec4 Offset;
+
+varying vec4  baseColor;
+varying float Phase;
+varying float FreqTwoPi;
+varying float Orientation;  // Get the orientation from the vertex shader
+
+void main()
+{
+    /* Query current output texel position: */
+    vec2 pos = gl_TexCoord[0].xy;
+
+    /* Compute the distance and angle (in radians) from the center: */
+    vec2 relativePos = pos - Center;
+    float radius = length(relativePos);
+    float angle = degrees(atan(relativePos.y, relativePos.x));  // Convert angle to degrees
+
+    /* Normalize angle to be between 0 and 360 degrees */
+    if (angle < 0.0) {
+        angle += 360.0;
+    }
+
+    /* Discard pixels based on radius and angular constraints */
+    if (radius > Radius) {
+        discard;
+    }
+    if (angle < AngleStart || angle > AngleEnd) {
+        discard;
+    }
+
+    /* Get the orientation (in degrees) from the vertex shader and convert to radians */
+    float orientationRad = radians(Orientation);
+
+    /* Rotate texture coordinates based on the orientation */
+    vec2 rotatedPos;
+    rotatedPos.x = cos(orientationRad) * pos.x - sin(orientationRad) * pos.y;
+    rotatedPos.y = sin(orientationRad) * pos.x + cos(orientationRad) * pos.y;
+
+    /* Evaluate sine grating at rotated position, frequency, and phase: */
+    float sv = sin(rotatedPos.x * FreqTwoPi + Phase);
+
+    /* Multiply/Modulate base color and alpha with calculated sine */
+    /* values, add some constant color/alpha Offset, assign as final fragment */
+    /* output color: */
+    gl_FragColor = (baseColor * sv) + Offset;
+}

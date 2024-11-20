@@ -56,13 +56,20 @@ if ~computerDetails.windows
             scr.experimenter = 'Rania';
             scr.scrViewingDist_cm = 50;
             const.keyboard = 'Apple Internal Keyboard / Trackpad';
+            scr.maxDiam_percent = 0.888; 
+            yOffset_percent = 0.9136;
         case 'ADUAE08550LP-MX-4'
             scr.experimenter = 'NYUADScanner';
             scrX_mm = 720; scrY_mm = 405;
             scr.scrViewingDist_cm = 83.5; %88;
+            
+            % make instructions BIG so operator can see
+            const.text_size = 40;
+            const.text_font = 'Abadi MT Condensed Extra Bold';
+            
             disp('ACCOUNTING FOR SCALING OFFSET BETWEEN PROJECTED IMAGE AND DISPLAY')
-            scr.maxDiam_percent = 0.888; %.89;  
-            yOffset_percent = 0.9136; %.9136; 
+            scr.maxDiam_percent = 0.888; 
+            yOffset_percent = 0.9136;
             const.keyboard = 'Magic Keyboard with Numeric Keypad';
             if const.DEBUG == 1
                 const.vpixx = 0;
@@ -118,8 +125,8 @@ scr.scrPixelDepth_bpp = resolution.pixelSize; % bits per pixel
 if const.DEBUG == 1
     %PsychDebugWindowConfiguration(0, 0.5)
     % Window resolution (pixel): [small window]
-    scr.windX_px = scr.windX_px/2;
-    scr.windY_px = scr.windY_px/2;
+    %scr.windX_px = scr.windX_px/2;
+    %scr.windY_px = scr.windY_px/2;
     scr_dim = [0, 0, scr.windX_px, scr.windY_px];
     const.vpixx = 0;
     [~] = Screen('Preference', 'SkipSyncTests', 1); % change to 0 for real exp
@@ -136,6 +143,7 @@ if const.vpixx == 1
     Datapixx('StopAllSchedules');
     Datapixx('RegWrRd');    % Synchronize DATAPixx registers to local register cache
 end
+
 
 PsychDefaultSetup(2); % assert OpenGL, setup unifiedkeys and unit color range
 PsychImaging('PrepareConfiguration'); % First step in starting pipeline
@@ -173,7 +181,7 @@ scr.ifi = Screen('GetFlipInterval', const.window);
 % the drawn patch before it is superimposed to the framebuffer image, ie.,
 % it allows to specify a global per-patch contrast value:
 %Screen('BlendFunction', const.window, GL_ONE, GL_ONE);
-Screen('BlendFunction', const.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+%Screen('BlendFunction', const.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 % Set drawing to maximum priority level
 topPriorityLevel = MaxPriority(const.window);
