@@ -6,7 +6,7 @@ clear all; close all; clc;
 
 % setup path
 addpath(genpath(pwd));
-projectName = 'da'; % 'dg', or 'dgl' or 'da'
+projectName = 'dg'; % 'dg', or 'dgl' or 'da'
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
 %bidsDir = '/Volumes/server/Projects/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
@@ -21,8 +21,8 @@ setup_user('rania', bidsDir)
 projectSettings = loadConfig(githubDir);
 
 hRF_setting = 'glmsingle'; %
-subj = 'sub-wlsubj123'; %'sub-0426';
-ses = 'ses-04'; %'ses-01'; %'ses-nyu3t02'; %'ses-01';
+subj = 'sub-0427'; %'sub-0426';
+ses = 'ses-01'; %'ses-01'; %'ses-nyu3t02'; %'ses-01';
 retFolder = 'prfvista_mov';
 
 derivativesFolder = fullfile(bidsDir, 'derivatives', sprintf('%sGLM',projectName), ...
@@ -98,7 +98,7 @@ for ri=1:length(projectSettings.rois)
         radialvstang = isradial(ci);
 
         % compute and plot ttave main dir
-        ttave_compute(matrices_onset,datafiles, 'mainCardinalVsMainOblique', surfaceROI, projectSettings, radialvstang);
+        [ttaveOutput, ttaveTime] = ttave_compute(matrices_onset,datafiles, 'mainCardinalVsMainOblique', surfaceROI, projectSettings, radialvstang);
 
     end
 
@@ -119,7 +119,7 @@ for ri=1:length(projectSettings.rois)
         radialvstang = isradial(ci);
 
         % compute and plot ttave main dir
-        ttave_compute(matrices_onset, datafiles, 'derivedCardinalVsDerivedOblique', surfaceROI, projectSettings, radialvstang);
+        [ttaveOutput, ttaveTime] = ttave_compute(matrices_onset, datafiles, 'derivedCardinalVsDerivedOblique', surfaceROI, projectSettings, radialvstang);
 
     end
 

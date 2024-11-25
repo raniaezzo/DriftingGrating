@@ -1,4 +1,4 @@
-function plot_ttave(ttaveOutput, projectSettings, asymmetryName)
+function [legendLabels] = plot_ttave(ttaveOutput, projectSettings, asymmetryName)
 
     subj = projectSettings.subject;
     roiName = projectSettings.roiName;
@@ -127,11 +127,9 @@ function plot_ttave(ttaveOutput, projectSettings, asymmetryName)
     set(gca, 'XTickLabel', new_xticklabels);
     xlabel('time (s)')
     ylabel('% signal change')
+    [subjectyMin, subjectyMax] = getSubjectTTaxis(subj, comparisonName);
 
-    %[subjectyMin, subjectyMax] = getSubjectTTaxis(subj, comparisonName);
-
-    ylim([projectSettings.subjectwise_tta_limits.(strrep(subj, '-', '_')).main.min, ...
-        projectSettings.subjectwise_tta_limits.(strrep(subj, '-', '_')).main.max])
+    ylim([subjectyMin, subjectyMax])
     ax = gca;
     ax.FontSize = 20;
     if legendOn || strcmp(subj, 'sub-0395')
@@ -141,8 +139,8 @@ function plot_ttave(ttaveOutput, projectSettings, asymmetryName)
     f1.Position = [72 712 897 441];
     
     % also save figure as png & pdf
-    filename = sprintf('ttaveSignal_%s_%s_%s_%s', subj, roiName, asymmetryName, comparisonName);
-    ttaveSave = fullfile(projectSettings.ttaveSavePath,filename);
+    filename = sprintf('ttaveSignal_%s_%s_%s_%s', projectSettings.subject, roiName, asymmetryName, comparisonName);
+    ttaveSave = fullfile(ttaveSavePath,filename);
     saveas(gcf, sprintf('%s.png', ttaveSave));
 
     f1.Position = [72*0.7 712*.7 897*.7 441*.7];

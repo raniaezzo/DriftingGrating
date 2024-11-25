@@ -1,4 +1,4 @@
-function [rois, axes_limits, pairaxes_limits, pairaxes_PAew_limits, colors_data, contrasts_dict] = loadConfig(githubDir)
+function projectSettings = loadConfig(githubDir)
 
     roisfile = fullfile(githubDir, 'DriftingGrating', 'AnalysisCode', 'jsons', 'ROIS.json');
     str = fileread(roisfile); rois_dict = jsondecode(str);
@@ -21,6 +21,11 @@ function [rois, axes_limits, pairaxes_limits, pairaxes_PAew_limits, colors_data,
     axesLimfile = fullfile(githubDir, 'DriftingGrating', 'AnalysisCode', 'jsons', 'pairwise_equalPAweight_limits.json');
     str = fileread(axesLimfile);
     pairaxes_PAew_limits = jsondecode(str);
+
+    % read in file for axes limits
+    ttaSubjectsLimfile = fullfile(githubDir, 'DriftingGrating', 'AnalysisCode', 'jsons', 'subjectwise_tta_limits.json');
+    str = fileread(ttaSubjectsLimfile);
+    subjectwise_tta_limits = jsondecode(str);
     
     colorsfile = fullfile(githubDir, 'DriftingGrating', 'AnalysisCode', 'jsons', 'COLORS.json');
     str = fileread(colorsfile);
@@ -34,6 +39,14 @@ function [rois, axes_limits, pairaxes_limits, pairaxes_PAew_limits, colors_data,
         % EXAMPLE USE
         % contrastnames = {contrasts_dict.contrasts.(strcat(projectName, '_contrast_name'))};
 
+    projectSettings.gitDir = githubDir;
+    projectSettings.rois = rois;
+    projectSettings.axes_limits = axes_limits;
+    projectSettings.pairaxes_limits = pairaxes_limits;
+    projectSettings.pairaxes_PAew_limits = pairaxes_PAew_limits;
+    projectSettings.colors_data = colors_data;
+    projectSettings.contrasts_dict = contrasts_dict;
+    projectSettings.subjectwise_tta_limits = subjectwise_tta_limits;
 
 end
 

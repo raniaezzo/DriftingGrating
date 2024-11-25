@@ -1,8 +1,13 @@
-function filteredPrfBins = retriveRetData(bidsDir, retFolder, subj, polarAngleBinWidth, minECC, maxECC, minVAREXP)
+function filteredPrfBins = retriveRetData(projectSettings)
+
+    polarAngleBinWidth = projectSettings.polarAngleBinWidth;
+    minECC = projectSettings.minECC;
+    maxECC = projectSettings.maxECC;
+    minVAREXP = projectSettings.minVAREXP;
 
     polarAngles = 0:45:315;
     hemis = {'lh'; 'rh'};
-    retDir = dir(fullfile(bidsDir, 'derivatives', retFolder, subj, '**/stimfiles.mat'));
+    retDir = dir(fullfile(projectSettings.bidsDir, 'derivatives', projectSettings.retFolder, projectSettings.subject, '**/stimfiles.mat'));
     retDir = retDir.folder;
 
     for hi=1:numel(hemis)

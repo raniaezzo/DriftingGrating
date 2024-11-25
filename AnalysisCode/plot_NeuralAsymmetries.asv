@@ -74,11 +74,14 @@ end
 % 28 - s45_v_b 
 % 29 - s135_v_b
 
-% add to projectSettings
 projectSettings.projectName = projectName;
 projectSettings.comparisonName = comparisonName;
 projectSettings.subjects = subjects;
 projectSettings.figureDir = figureDir;
+projectSettings.contrasts_dict = contrasts_dict;
+
+projectSettings.colors_data = colors_data;
+projectSettings.pairaxes_PAew_limits = pairaxes_PAew_limits;
 
 
 %% MAIN CONDITION: Plot pairwise plots (JUST FOR SANITY CHECK)

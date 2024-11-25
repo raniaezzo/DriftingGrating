@@ -4,7 +4,6 @@ eventTRs_prior = projectSettings.eventTRs_prior;
 eventTRs_after = projectSettings.eventTRs_after;
 padding = projectSettings.padding; % TRs
 comparisonName = projectSettings.comparisonName;
-projectName = projectSettings.projectName;
 
 % Check project name & request
 if strcmp(projectSettings.projectName, 'da')
@@ -185,23 +184,16 @@ for mi=1:length(matrices)
                             elseif (all(ismember(angleVals, [0,90,180,270])) && ((ci <=8) && (ci > 4))) || ... % if on the meridians and spiral
                                     (all(ismember(angleVals, [45,135,225,315])) && (ci <= 4)) % if on the diagonals and in/out/c/cc
                                 disadvMotion = [disadvMotion ; trial];
-                            else
-                                if ci ~= 13
-                                    warning('Is this supposed to not meet a condition?')
-                                end
                             end
                         elseif ci > 8 && ci <= 13 % static
-                            if (all(ismember(angleVals, [0,90,180,270])) && ((ci ==9) || (ci == 10))) || ... % if on the meridians and annulus/pinwheel
-                                    (all(ismember(angleVals, [45,135,225,315])) && ((ci ==11) || (ci ==12))) % if on the diagonals and spiral
-                                advStatic = [advStatic ; trial];
-                            elseif (all(ismember(angleVals, [0,90,180,270])) && ((ci ==11) || (ci == 12))) || ... % if on the meridians and spiral
-                                    (all(ismember(angleVals, [45,135,225,315])) && ((ci ==9) || (ci ==10))) % if on the diagonals and annulus/pinwheel
-                                disadvStatic = [disadvStatic ; trial];
-                            else
-                                if ci ~= 13
-                                    warning('Is this supposed to not meet a condition?')
-                                end
-                            end
+                            if (all(ismember(angleVals, [0,90,180,270])) && ((ci >=9) && (ci >= 10))) || ... % if on the meridians and annulus/pinwheel
+                                    (all(ismember(angleVals, [45,135,225,315])) && ((ci <=8) && (ci > 4)))
+
+% (9) S_0, 
+% (10) S_90, 
+% (11) S_45, 
+% (12) S_135, 
+% (13) B
                         end
                     end
 

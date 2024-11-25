@@ -2,7 +2,7 @@ clc; clear all; close all
 
 % set up
 addpath(genpath(pwd));
-projectName = 'da';
+projectName = 'dg';
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
 hRF_setting = 'glmsingle';
@@ -10,7 +10,7 @@ fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
 glmResultsfolder = fullfile(bidsDir, 'derivatives', strcat(projectName, 'GLM'), strcat('hRF_', hRF_setting));
 
 % can be 'motion_minus_orientation' ; 'motion_minus_baseline' ; 'orientation_minus_baseline'
-comparisonName = 'motion_minus_baseline';
+comparisonName = 'orientation_minus_baseline';
 
 [rois, axes_limits, pairaxes_limits, pairaxes_PAew_limits, colors_data, contrasts_dict] = loadConfig(githubDir);
 
@@ -31,8 +31,10 @@ if ~isfolder(figureDir)
 end
 
 if strcmp(projectName, 'dg')
-    medianBOLDpa = medianBOLDpa(:,:,:,[1,2,3,4,5,6,7,8,9,10,11,13]); % leave out 12 and include 13 instead
-    medianBOLD = medianBOLD(:,:,[1,2,3,4,5,6,7,8,9,10,11,13]);
+    %medianBOLDpa = medianBOLDpa(:,:,:,[1,2,3,4,5,6,7,8,9,10,11,13]); % leave out 12 and include 13 instead
+    %medianBOLD = medianBOLD(:,:,[1,2,3,4,5,6,7,8,9,10,11,13]);
+    menBOLDpa = meanBOLDpa(:,:,:,[1,2,3,4,5,6,7,8,9,10,11,13]); % leave out 12 and include 13 instead
+    meanBOLD = meanBOLD(:,:,[1,2,3,4,5,6,7,8,9,10,11,13]);
     % to leave out one subject
     subjects = {'sub-0037', 'sub-0201', 'sub-0255', 'sub-0397', ...
         'sub-0442', 'sub-wlsubj121', ...
@@ -240,7 +242,7 @@ meanRelative=1;
 %colors = [[127 191 123]/255; [166 97 26]/255; [146 197 222]/255];
 %colors2 = [[175 141 195]/255; [64 176 166]/255; [202 0 32]/255];
 
-for ai=3:3 %1:numel(asymmetryNames)
+for ai=1:numel(asymmetryNames)
 
     x = ai; % this is condition 1, 2, or 3
 

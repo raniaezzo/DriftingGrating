@@ -1,0 +1,42 @@
+{
+    "sub-0037": {
+            "main": {"min": -0.5, "max": 0.8}
+        },
+    "sub-0201": {
+            "main": {"min": -0.5, "max": 0.5}
+        },
+    "sub-0255": {
+            "main": {"min": -0.5, "max": 1.5}
+        },
+    "sub-0397": {
+            "main": {"min": -0.5, "max": 1}
+        },
+    "sub-0442": {
+            "main": {"min": -1, "max": 2}
+        },
+    "sub-wlsubj121": {
+            "main": {"min": -0.6, "max": 1}
+        },
+    "sub-wlsubj123": {
+            "main": {"min": -0.75, "max": 1.5}
+        },
+    "sub-wlsubj124": {
+            "main": {"min": -0.75, "max": 1.75}
+        },
+    "sub-wlsubj127": {
+            "main": {"min": -1, "max": 2}
+        },
+    "sub-0395": {
+            "main": {"min": -1, "max": 2}
+        },
+    "sub-0426": {
+            "main": {"min": -0.5, "max": 1.5}
+        },
+    "sub-0427": {
+            "main": {"min": -1.5, "max": 2.5}
+        },
+    "sub-0250": {
+            "main": {"min": -1.2, "max": 1.5}
+        }
+}
+
