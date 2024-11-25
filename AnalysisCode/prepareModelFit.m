@@ -1,60 +1,77 @@
 clc; clear all; close all
 
-%%
+% set up
+addpath(genpath(pwd));
+projectName = 'da';
+bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
+githubDir = '~/Documents/GitHub';
+hRF_setting = 'glmsingle';
+fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
+glmResultsfolder = fullfile(bidsDir, 'derivatives', strcat(projectName, 'GLM'), strcat('hRF_', hRF_setting));
 
+% can be 'motion_minus_orientation' ; 'motion_minus_baseline' ; 'orientation_minus_baseline'
+comparisonName = 'motion_minus_baseline';
 
-% motion directions
-    % 8 - m0_v_s90
-    % 9 - m90_v_s0
-    % 10 - m180_v_s90
-    % 11 - m270_v_s0
-    % 12 - m45_v_s135
-    % 13 - m135_v_s45
-    % 14 - m225_v_s135
-    % 15 - m315_v_s45
+[rois, axes_limits, pairaxes_limits, pairaxes_PAew_limits, colors_data, contrasts_dict] = loadConfig(githubDir);
 
-    % 18 - m0_v_b
-    % 19 - m180_v_b 
-    % 20 - m90_v_b 
-    % 21 - m270_v_b 
-    % 22 - m45_v_b 
-    % 23 - m225_v_b 
-    % 24 - m135_v_b
-    % 25 - m315_v_b 
+rois = rois(1:7); % remove once I process v3a / v3b
+metric = 'bold';
 
-    % 26 - s0_v_b 
-    % 27 - s90_v_b 
-    % 28 - s45_v_b 
-    % 29 - s135_v_b
+figureDir = [strrep(bidsDir, 'data_bids', 'figures'), projectName];
 
-% polar angle
-    anglevals = [90; 45; 0; 315; 270; 225; 180; 135];
-% rois
-% subjects
+%% Load and remove subject with extreme motion
 
-cardinalmDir = [0; 90; 180; 270];
-primaryMeridians = [90; 0; 270; 180];
+load(fullfile(glmResultsfolder, 'meanBOLDpa')) % contrasts x polarAngles x ROIs x subjects
+load(fullfile(glmResultsfolder, 'meanBOLD')) % contrasts x ROIs x subjects
 
-% motion - orientation
-%filtered_meanBOLDpa = meanBOLDpa(8:15, :, :, :);
-%mdirvals = [0; 90; 180; 270; 45; 135; 225; 315];
+figureDir = [strrep(bidsDir, 'data_bids', 'figures'), projectName];
 
-% motion - baseline
-% filtered_meanBOLDpa = meanBOLDpa(18:25, :, :, :);
-% mdirvals = [0; 180; 90; 270; 45; 225; 135; 315];
+if ~isfolder(figureDir)
+    mkdir(figureDir)
+end
 
-% orientation - baseline
-filtered_meanBOLDpa = meanBOLDpa(26:29, :, :, :);
-mdirvals = [0; 90; 45; 135];
+if strcmp(projectName, 'dg')
+    medianBOLDpa = medianBOLDpa(:,:,:,[1,2,3,4,5,6,7,8,9,10,11,13]); % leave out 12 and include 13 instead
+    medianBOLD = medianBOLD(:,:,[1,2,3,4,5,6,7,8,9,10,11,13]);
+    % to leave out one subject
+    subjects = {'sub-0037', 'sub-0201', 'sub-0255', 'sub-0397', ...
+        'sub-0442', 'sub-wlsubj121', ...
+        'sub-wlsubj123', 'sub-wlsubj124', 'sub-wlsubj127', 'sub-0395', 'sub-0426', ...
+        'sub-0250'};
+elseif strcmp(projectName, 'da')
+    % load subjects
+    subjects = {'sub-0037', 'sub-0201', 'sub-0255', 'sub-wlsubj123', 'sub-wlsubj124', ...
+        'sub-0395', 'sub-0426'};
+end
+
+radialvstang = 0;
+[proConditions, conConditions, allConditions] = retrieveProConIdx(projectName, comparisonName, radialvstang);
+
+filtered_meanBOLDpa = meanBOLDpa(allConditions, :, :, :);
+
+% for now, only use DG names -- they apply to both DG and DA b/c directions
+% defined in absolute reference frame
+%contrastnames = {contrasts_dict.contrasts.(strcat(projectName, '_contrast_name'))};
+contrastnames = {contrasts_dict.contrasts.('dg_contrast_name')};
+
+% Extract integers before '_v_'
+mdirvals = cellfun(@(x) str2double(regexp(x, '\d+(?=_v_)', 'match', 'once')), {contrastnames{allConditions}});
+mdirvals = mdirvals';
 
 [nMotDirs, nPAs, nROIs, nSubjs] = size(filtered_meanBOLDpa);
 
-metric = 'bold';
-roinames = {'V1','V2','V3','hV4','MTcomplex', 'MT', 'MST'};
+%%
 
-for roi=1:length(roinames)
+% polar angle
+anglevals = [90; 45; 0; 315; 270; 225; 180; 135];
+
+maincardinalmDir = [0; 90; 180; 270]; % this is up/down/left/right for DG
+                                      % and in/out/cc/c for DA
+primaryMeridians = [90; 0; 270; 180];
+
+for roi=1:length(rois)  % just 1 ROI at a time (makes interprettability easier)
     
-    saveDir = fullfile('/Users','rje257','Desktop','LME_results', roinames{roi});
+    saveDir = fullfile(glmResultsfolder,'LME_results', comparisonName, rois{roi});
     
     if ~isfolder(saveDir)
         mkdir(saveDir)
@@ -63,10 +80,10 @@ for roi=1:length(roinames)
     % Loop through each element in the new matrix
     index = 1;
 
-    % Preallocate the new matrix
-    reshaped_mat = zeros(nMotDirs*nPAs*nSubjs, 1); % just 1 ROI (makes interprettability easier)
+    % Preallocate the new matrix (1 long column)
+    reshaped_mat = zeros(nMotDirs*nPAs*nSubjs, 1);
 
-    dirCol = repmat(mdirvals, nPAs*nSubjs, 1);
+    dirCol = repmat(mdirvals, nPAs*nSubjs, 1); 
     paRep = repelem(anglevals, nPAs);
     paCol = repmat(paRep, nSubjs, 1);
     subCol = repelem(1:nSubjs, 64)';
@@ -74,6 +91,8 @@ for roi=1:length(roinames)
     for subject = 1:nSubjs
         for pa = 1:nPAs
             for md = 1:nMotDirs
+               % fill the new reshaped matrix with the foiled values
+               % (condition, polar angle, roi, subject)
                reshaped_mat(index, 1) = filtered_meanBOLDpa(md, pa, roi, subject);
                index = index + 1;
             end
@@ -81,56 +100,70 @@ for roi=1:length(roinames)
     end
 
     %%
-    % now determine which are cartesian cardinal, polar cardinal, and radial:
+    % now determine which are main cardinal, derived cardinal, and radial:
 
-    % just for orientation
-    reshaped_mat = repelem(reshaped_mat, 2);
-    dirCol = repelem(dirCol, 2);
+    if strcmp(comparisonName, 'orientation_minus_baseline')
+        % just for orientation, because horizontal is both 0 and 180 deg
+        % this repeats each value consecutively
+        reshaped_mat = repelem(reshaped_mat, 2);
+        dirCol = repelem(dirCol, 2);
+    end
 
     finalMat = [reshaped_mat, dirCol, paCol, subCol];
 
-    cartCardinal = zeros(length(finalMat),1);
-    polCardinal = zeros(length(finalMat),1);
+    % initialize value for each asymmetry
+    mainCardinal = zeros(length(finalMat),1);
+    derivedCardinal = zeros(length(finalMat),1);
     polRadial = zeros(length(finalMat),1);
 
-    cartCardinal_idx = ismember(finalMat(:,2), cardinalmDir);
-    cartCardinal(cartCardinal_idx) = 1;
-    cartCardinal(~cartCardinal_idx) = -1;
+    % this will select which directions are main cardinal (dg: up, down,
+    % left, right = 1 vs NOT = -1 ; and da: in, out, cc, c = 1 vs NOT = -1)
+    mainCardinal_idx = ismember(finalMat(:,2), maincardinalmDir);
+    mainCardinal(mainCardinal_idx) = 1;
+    mainCardinal(~mainCardinal_idx) = -1;
 
-    polCardinal_idx = (ismember(finalMat(:,2), cardinalmDir) & ismember(finalMat(:,3), primaryMeridians)) ...
-        | ((~ismember(finalMat(:,2), cardinalmDir) & (~ismember(finalMat(:,3), primaryMeridians))));
-    polCardinal(polCardinal_idx) = 1;
-    polCardinal(~polCardinal_idx) = -1;
+    % this will select which directions are derived cardinal (dg: in, out, 
+    % cc, c = 1 vs NOT = -1 ; and da: up, down, left, right = 1 vs NOT = -1 )
+    derivedCardinal_idx = (ismember(finalMat(:,2), maincardinalmDir) & ismember(finalMat(:,3), primaryMeridians)) ...
+        | ((~ismember(finalMat(:,2), maincardinalmDir) & (~ismember(finalMat(:,3), primaryMeridians))));
+    derivedCardinal(derivedCardinal_idx) = 1;
+    derivedCardinal(~derivedCardinal_idx) = -1;
 
-    polRadial_idx = (abs(finalMat(:,2)-finalMat(:,3)) == 0 | abs(finalMat(:,2)-finalMat(:,3)) == 180);
+    if strcmp(projectName, 'dg')
+        polRadial_idx = (abs(finalMat(:,2)-finalMat(:,3)) == 0 | abs(finalMat(:,2)-finalMat(:,3)) == 180);
+        polTangential_idx = abs(finalMat(:,2)-finalMat(:,3)) == 90 | abs(finalMat(:,2)-finalMat(:,3)) == 270;
+    elseif strcmp(projectName, 'da')
+        polRadial_idx = ismember(finalMat(:,2), [90, 270]); % for da, this is in/out
+        polTangential_idx = ismember(finalMat(:,2), [0, 180]); % for da, this is c/cc
+    end
+
     polRadial(polRadial_idx) = 1;
-    polTangential = abs(finalMat(:,2)-finalMat(:,3)) == 90 | abs(finalMat(:,2)-finalMat(:,3)) == 270;
-    polRadial(polTangential) = -1;
+    polRadial(polTangential_idx) = -1;
 
-    finalMat = [finalMat, cartCardinal, polCardinal, polRadial];
+    finalMat = [finalMat, mainCardinal, derivedCardinal, polRadial];
 
     %%
 
-    variable_names = {'bold', 'motiondir', 'polarangle', 'sub', 'cartCardinal', 'polCardinal', 'polRadial'};
+    variable_names = {'bold', 'motiondir', 'polarangle', 'sub', 'mainCardinal', 'derivedCardinal', 'polRadial'};
     modeldata = array2table(finalMat, 'VariableNames', variable_names);
 
     modeldata.subject = categorical(modeldata.sub);
 
-    lme = fitlme(modeldata, 'bold ~ cartCardinal + polCardinal + polRadial + (1|sub)');
+    lme = fitlme(modeldata, 'bold ~ mainCardinal + derivedCardinal + polRadial + (1|sub)');
 
     anova(lme, 'dfmethod', 'satterthwaite')
     
     global_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'Intercept'));
-    abscard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'cartCardinal'));
-    relcard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'polCardinal'));
+    maincard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'mainCardinal'));
+    derivedcard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'derivedCardinal'));
     radial_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'polRadial'));
 
     global_est = double(lme.Coefficients(global_idx,2));
-    abscard_est = double(lme.Coefficients(abscard_idx,2));
-    relcard_est = double(lme.Coefficients(relcard_idx,2));
+    maincard_est = double(lme.Coefficients(maincard_idx,2));
+    derivedcard_est = double(lme.Coefficients(derivedcard_idx,2));
     radial_est = double(lme.Coefficients(radial_idx,2));
 
-    estimates = [global_est, abscard_est, relcard_est, radial_est];
+    estimates = [global_est, maincard_est, derivedcard_est, radial_est];
 
     save(fullfile(saveDir,strcat('LME_',metric)), 'estimates');
 
@@ -147,14 +180,14 @@ rng('default'); rng(1);
 subjID = 1:10;
 bootN = 1000;
 
+for roi=1:length(rois)
 
-roinames = {'V1','V2','V3','hV4','MTcomplex', 'MT', 'MST'};
+    roi
 
-for roi=1:length(roinames)
+    saveDir = fullfile(glmResultsfolder,'LME_results', comparisonName, rois{roi});
     
     saveboot = {};
     coeffs = nan(4,bootN);
-    saveDir = fullfile('/Users','rje257','Desktop','LME_results', roinames{roi});
     load(strcat(saveDir, '/modeldata'), 'modeldata');
 
     for bi=1:bootN
@@ -170,21 +203,21 @@ for roi=1:length(roinames)
             randomsample = [randomsample ; temp];
         end
 
-        lme = fitlme(randomsample,'bold ~ cartCardinal + polCardinal + polRadial + (1|sub)');
+        lme = fitlme(randomsample,'bold ~ mainCardinal + derivedCardinal + polRadial + (1|sub)');
 
         saveboot{bi} = lme;
 
         global_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'Intercept'));
-        abscard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'cartCardinal'));
-        relcard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'polCardinal'));
+        maincard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'mainCardinal'));
+        derivedcard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'derivedCardinal'));
         radial_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'polRadial'));
 
         global_est = double(lme.Coefficients(global_idx,2));
-        abscard_est = double(lme.Coefficients(abscard_idx,2));
-        relcard_est = double(lme.Coefficients(relcard_idx,2));
+        maincard_est = double(lme.Coefficients(maincard_idx,2));
+        derivedcard_est = double(lme.Coefficients(derivedcard_idx,2));
         radial_est = double(lme.Coefficients(radial_idx,2));
 
-        estimates = [global_est, abscard_est, relcard_est, radial_est];
+        estimates = [global_est, maincard_est, derivedcard_est, radial_est];
         coeffs(:,bi) = estimates;
         clear lme
         disp(bi)
@@ -194,117 +227,105 @@ for roi=1:length(roinames)
     save(strcat(saveDir, '/boot'), 'saveboot','coeffs');
 end
 
+
+
 %%
 
+asymmetryNames = {'mainCardinalVsMainOblique', 'derivedCardinalVsDerivedOblique', 'radialVsTangential'};
+
+%all_labels = {{'Main Cardinal', 'Main Oblique'}, {'Derived Cardinal', 'Derived Oblique'}, {'Radial', 'Tangential'}};
+
 ci_level = 68; %68;
-colors = [[127 191 123]/255; [166 97 26]/255; [146 197 222]/255];
-colors2 = [[175 141 195]/255; [64 176 166]/255; [202 0 32]/255];
-meanRelative=0; %1;
+meanRelative=1;
+%colors = [[127 191 123]/255; [166 97 26]/255; [146 197 222]/255];
+%colors2 = [[175 141 195]/255; [64 176 166]/255; [202 0 32]/255];
 
-for roi=1:length(roinames)
-    % load('bootLME_sensitivity.mat')
-    % load('LME_sensitivity.mat')
-    saveDir = fullfile('/Users','rje257','Desktop','LME_results', roinames{roi});
-    load(strcat(saveDir, '/modeldata'), 'modeldata');
-    load(fullfile(saveDir,strcat('LME_',metric)), 'estimates');
-    load(strcat(saveDir, '/boot'), 'saveboot','coeffs');
+for ai=3:3 %1:numel(asymmetryNames)
 
-    Gintercept = estimates(1);
-    abs_cardinal_est = Gintercept + estimates(2);
-    rel_cardinal_est = Gintercept + estimates(3);
-    radial_est = Gintercept + estimates(4);
+    x = ai; % this is condition 1, 2, or 3
 
-    CIFcn = @(x,p)prctile(x, [100-p, p]); p = ci_level;
+    asymmetryName = asymmetryNames{ai};
 
-    % coefficient order is: intercept, abs_cardinality, rel_cardinality, radiality
-    CI_abscardinality = CIFcn(coeffs(2,:)+Gintercept,p);
-    CI_relcardinality = CIFcn(coeffs(3,:)+Gintercept,p);
-    CI_radiality = CIFcn(coeffs(4,:)+Gintercept,p);
+    colors = colors_data.conditions.(projectName).(asymmetryName).color_pro';
+    colors2 = colors_data.conditions.(projectName).(asymmetryName).color_con';
 
+    %labelnames = all_labels(x);
+    labelnames = lower(strsplit(asymmetryNames{ai}, 'Vs'));
+
+    figure
+    xlim([0 8]);
+    ylim([0 8]);
+    for roi=1:length(rois)
+        
+        % load('bootLME_sensitivity.mat')
+        % load('LME_sensitivity.mat')
     
-    %
+        saveDir = fullfile(glmResultsfolder,'LME_results', comparisonName, rois{roi});
     
-%     figure
-% 
-%     subplot(3,1,1)
-%     xline(abs_cardinal_est, 'k--', 'linewidth', 4)
-%     hold on
-%     histogram(coeffs(2,:)+Gintercept, 'FaceColor', colors(1,:))
-%     hold on
-%     xline(CI_abscardinality(1), 'r--', 'linewidth', 4)
-%     hold on
-%     xline(CI_abscardinality(2), 'r--', 'linewidth', 4)
-%     hold on
-%     xline(Gintercept, 'y--', 'linewidth', 4)
-%     title('abs cardinal')
-%     %xlim([xmin xmax])
-% 
-%     subplot(3,1,2)
-%     xline(rel_cardinal_est, 'k--', 'linewidth', 4)
-%     hold on
-%     histogram(coeffs(3,:)+Gintercept, 'FaceColor', colors(2,:))
-%     hold on
-%     xline(CI_relcardinality(1), 'r--', 'linewidth', 4)
-%     hold on
-%     xline(CI_relcardinality(2), 'r--', 'linewidth', 4)
-%     hold on
-%     xline(Gintercept, 'y--', 'linewidth', 4)
-%     title('rel cardinal')
-%     %xlim([xmin xmax])
-% 
-%     subplot(3,1,3)
-%     xline(radial_est, 'k--', 'linewidth', 4)
-%     hold on
-%     histogram(coeffs(4,:)+Gintercept, 'FaceColor', colors(3,:))
-%     hold on
-%     xline(CI_radiality(1), 'r--', 'linewidth', 4)
-%     hold on
-%     xline(CI_radiality(2), 'r--', 'linewidth', 4)
-%     hold on
-%     xline(Gintercept, 'y--', 'linewidth', 4)
-%     title('radial')
-%     %xlim([xmin xmax])
-% 
-%     sgtitle(sprintf('mean betas + %s CIs', num2str(ci_level)))
-
-    % sensitivity (manuscript figure)
-
-    y = [estimates(2) estimates(3) estimates(4)]; %[0.11446, 0.033442, 0.015738];
-    %errlow = [0.0053434, 0.0053434, 0.0075567]; % output from model
-    %errhigh = [0.0053434, 0.0053434, 0.0075567];
-
-    errlow = [CI_abscardinality(1) CI_relcardinality(1) CI_radiality(1)];
-    errhigh = [CI_abscardinality(2) CI_relcardinality(2) CI_radiality(2)];
-
-    y1 = Gintercept + y;
-    y2 = Gintercept - y;
-
-    errlow1 = y1-errlow;
-    errhigh1 = errhigh -y1;
-
-    errlow2 = errhigh1; %errlow1;
-    errhigh2 = errlow1; %errhigh1;
-
-    x = 1:3;
-    figure();
-    ax = axes();
-    hold(ax);
-    if meanRelative
-        baselineSub = Gintercept;
-    else
-        baselineSub = 0;
+        load(strcat(saveDir, '/modeldata'), 'modeldata');
+        load(fullfile(saveDir,strcat('LME_',metric)), 'estimates');
+        load(strcat(saveDir, '/boot'), 'saveboot','coeffs');
+    
+        Gintercept = estimates(1);
+        main_cardinal_est = Gintercept + estimates(2);
+        derived_cardinal_est = Gintercept + estimates(3);
+        radial_est = Gintercept + estimates(4);
+    
+        CIFcn = @(x,p)prctile(x, [100-p, p]); p = ci_level;
+    
+        % coefficient order is: intercept, abs_cardinality, rel_cardinality, radiality
+        CI_maincardinality = CIFcn(coeffs(2,:)+Gintercept,p);
+        CI_derivedcardinality = CIFcn(coeffs(3,:)+Gintercept,p);
+        CI_radiality = CIFcn(coeffs(4,:)+Gintercept,p);
+    
+    
+        y = [estimates(2) estimates(3) estimates(4)]; %[0.11446, 0.033442, 0.015738];
+        %errlow = [0.0053434, 0.0053434, 0.0075567]; % output from model
+        %errhigh = [0.0053434, 0.0053434, 0.0075567];
+    
+        errlow = [CI_maincardinality(1) CI_derivedcardinality(1) CI_radiality(1)];
+        errhigh = [CI_maincardinality(2) CI_derivedcardinality(2) CI_radiality(2)];
+    
+        y1 = Gintercept + y;
+        y2 = Gintercept - y;
+    
+        errlow1 = y1-errlow;
+        errhigh1 = errhigh -y1;
+    
+        errlow2 = errhigh1; %errlow1;
+        errhigh2 = errlow1; %errhigh1;
+    
+        %ax = axes();
+        %hold(ax);
+    
+        if meanRelative
+            baselineSub = Gintercept;
+        else
+            baselineSub = 0;
+        end
+        %for i=1:length(x)
+            boxchart(roi*1, y1(:,x)-baselineSub, 'BoxFaceColor', colors, 'LineWidth', 4, 'BoxWidth', .75)
+            hold on
+            %plot(roi*1, y1(:,x)-baselineSub, 'Color', colors, 'Marker', '.', 'MarkerSize', 10, 'LineStyle','none')
+            %hold on
+            errorbar(roi*1,y1(x)-baselineSub,errlow1(x), errhigh1(x), 'LineStyle','none', 'LineWidth', 2, 'Color', colors);
+            hold on
+            boxchart(roi*1, y2(:,x)-baselineSub, 'BoxFaceColor', colors2, 'LineWidth', 4, 'BoxWidth', .75)
+            hold on
+            errorbar(roi*1,y2(x)-baselineSub,errlow2(x), errhigh2(x), 'LineStyle','none', 'LineWidth', 2, 'Color', colors2);
+            hold on
+        %end
+        
+        hold on
+    
     end
-    for i=1:length(x)
-        boxchart(x(i)*ones(size(y1(:,i))), y1(:,i)-baselineSub, 'BoxFaceColor', colors(i,:), 'LineWidth', 3, 'BoxWidth', 1)
-        plot(x(i)*ones(size(y1(:,i))), y1(:,i)-baselineSub, 'Color', colors(i,:), 'Marker', '.', 'MarkerSize', 10, 'LineStyle','none')
-        hold on
-        errorbar(x(i),y1(i)-baselineSub,errlow1(i)-baselineSub, errhigh1(i)-baselineSub, 'LineStyle','none', 'LineWidth', 2, 'Color', colors(i,:));
-        hold on
-        boxchart(x(i)*ones(size(y2(:,i))), y2(:,i)-baselineSub, 'BoxFaceColor', colors2(i,:), 'LineWidth', 3, 'BoxWidth', 1)
-        hold on
-        errorbar(x(i),y2(i)-baselineSub,errlow2(i)-baselineSub, errhigh2(i)-baselineSub, 'LineStyle','none', 'LineWidth', 2, 'Color', colors2(i,:));
-        hold on
-    end
+    
+    hold on
+    % Create dummy plot objects for legend
+    h1 = plot(nan, nan, 'Color', colors, 'LineWidth', 3); % Dummy red line
+    hold on;
+    h2 = plot(nan, nan, 'Color', colors2, 'LineWidth', 3); % Dummy blue line
+    
     if meanRelative
         yline(0, '--', 'Color', [0 0 0], 'LineWidth', 2)
         ylim([-0.05 0.05])
@@ -312,156 +333,54 @@ for roi=1:length(roinames)
         yline(Gintercept, '--', 'Color', [0 0 0], 'LineWidth', 2)
         ylim([-0.05+Gintercept 0.05+Gintercept])
     end
-    xlim([0.5 3.5])
-    %ylim([ymin ymax])
+    xlim([0 8])
+    ylim([-0.03 0.03])
     set(gca,'XTick',[])
     box off
     set(gca,'linewidth',2, 'YColor', [0 0 0]);
     set(gca,'linewidth',2, 'XColor', [0 0 0]);
-    title(roinames(roi))
-    set(gca, 'FontName', 'Arial', 'FontSize', 12);
+    %title(condNames{x})
+    set(gca, 'FontName', 'Arial', 'FontSize', 20);
+    ax1 = gca;
+    %ax1.YTick = [-0.03, -0.015, 0, 0.015, 0.03];
     
+    % yticks = get(gca, 'ytick'); % Get current y-axis tick positions
+    % text(0.5, mean(yticks), '\Delta', 'VerticalAlignment', 'baseline', 'FontSize', 20); % Add triangle symbol at (0.5, y) position
     
-end
-hold off
-
-%%
-
-ci_level = 68; %68;
-colors = [[127 191 123]/255; [166 97 26]/255; [146 197 222]/255];
-colors2 = [[175 141 195]/255; [64 176 166]/255; [202 0 32]/255];
-meanRelative=1;
-condNames = {'cart cardinal', 'polar cardinal', 'radial'};
-
-x = 3; %:3; % condition
-
-all_labels = {{'Cart Cardinal', 'Cart Oblique'}, {'Pol Cardinal', 'Pol Oblique'}, {'Radial', 'Tangential'}};
-
-labelnames = all_labels(x);
-
-figure
-xlim([0 8]);
-ylim([0 8]);
-for roi=1:length(roinames)
+    % Get current y-axis label position
+    ylabelHandle = ylabel('temp', 'FontSize', 20);
+    ylabelPosition = get(ylabelHandle, 'Position');
+    % Remove y-axis label
+    delete(ylabelHandle);
     
-    % load('bootLME_sensitivity.mat')
-    % load('LME_sensitivity.mat')
-    saveDir = fullfile('/Users','rje257','Desktop','LME_results', roinames{roi});
-    load(strcat(saveDir, '/modeldata'), 'modeldata');
-    load(fullfile(saveDir,strcat('LME_',metric)), 'estimates');
-    load(strcat(saveDir, '/boot'), 'saveboot','coeffs');
-
-    Gintercept = estimates(1);
-    abs_cardinal_est = Gintercept + estimates(2);
-    rel_cardinal_est = Gintercept + estimates(3);
-    radial_est = Gintercept + estimates(4);
-
-    CIFcn = @(x,p)prctile(x, [100-p, p]); p = ci_level;
-
-    % coefficient order is: intercept, abs_cardinality, rel_cardinality, radiality
-    CI_abscardinality = CIFcn(coeffs(2,:)+Gintercept,p);
-    CI_relcardinality = CIFcn(coeffs(3,:)+Gintercept,p);
-    CI_radiality = CIFcn(coeffs(4,:)+Gintercept,p);
-
-
-    y = [estimates(2) estimates(3) estimates(4)]; %[0.11446, 0.033442, 0.015738];
-    %errlow = [0.0053434, 0.0053434, 0.0075567]; % output from model
-    %errhigh = [0.0053434, 0.0053434, 0.0075567];
-
-    errlow = [CI_abscardinality(1) CI_relcardinality(1) CI_radiality(1)];
-    errhigh = [CI_abscardinality(2) CI_relcardinality(2) CI_radiality(2)];
-
-    y1 = Gintercept + y;
-    y2 = Gintercept - y;
-
-    errlow1 = y1-errlow;
-    errhigh1 = errhigh -y1;
-
-    errlow2 = errhigh1; %errlow1;
-    errhigh2 = errlow1; %errhigh1;
-
-    %ax = axes();
-    %hold(ax);
-
-    if meanRelative
-        baselineSub = Gintercept;
-    else
-        baselineSub = 0;
-    end
-    %for i=1:length(x)
-        boxchart(roi*1, y1(:,x)-baselineSub, 'BoxFaceColor', colors(x,:), 'LineWidth', 4, 'BoxWidth', .75)
-        hold on
-        plot(roi*1, y1(:,x)-baselineSub, 'Color', colors(x,:), 'Marker', '.', 'MarkerSize', 10, 'LineStyle','none')
-        hold on
-        errorbar(roi*1,y1(x)-baselineSub,errlow1(x), errhigh1(x), 'LineStyle','none', 'LineWidth', 2, 'Color', colors(x,:));
-        hold on
-        boxchart(roi*1, y2(:,x)-baselineSub, 'BoxFaceColor', colors2(x,:), 'LineWidth', 4, 'BoxWidth', .75)
-        hold on
-        errorbar(roi*1,y2(x)-baselineSub,errlow2(x), errhigh2(x), 'LineStyle','none', 'LineWidth', 2, 'Color', colors2(x,:));
-        hold on
-    %end
+    % Add triangle symbol in place of y-axis label
+    y_pos = ylim;
+    %text(ylabelPosition(1), mean(y_pos), '\Delta BOLD signal (%)', 'FontSize', 20, 'Rotation', 90, 'HorizontalAlignment', 'center');
     
-    hold on
+    ylim([-0.5 0.5])
+    ax1 = gca;
+    ax1.YTick = [-0.5, -0.25 0, .25, 0.5];
+    text(ylabelPosition(1), mean(y_pos), '\Delta standardized BOLD response', 'FontSize', 20, 'Rotation', 90, 'HorizontalAlignment', 'center');
+    
+    xticks(1:length(rois))
+    
+    roinamesEdit = rois;
+    roinamesEdit{5} = "hMT+"; % edit the MT complex ; it was too long as 'MTcomplex'
+    
+    % Create a custom legend with the dummy plot objects
+    legend([h1, h2], labelnames, 'Location', 'best');
+    
+    xticklabels(roinamesEdit); % Set x-axis tick labels
+    
+    f1 = gcf;
+    f1.Position = [298 843 651 494];
+    
+    % Save the figure as a TIFF file with specific options
+    print(fullfile(figureDir, sprintf('LME_%s_%s_%s', comparisonName, projectName, asymmetryName)), '-dtiff', '-r300'); % '-r300' specifies a resolution of 300 DPI
 
 end
 
-hold on
-% Create dummy plot objects for legend
-h1 = plot(nan, nan, 'Color', colors(x,:), 'LineWidth', 3); % Dummy red line
-hold on;
-h2 = plot(nan, nan, 'Color', colors2(x,:), 'LineWidth', 3); % Dummy blue line
 
-if meanRelative
-    yline(0, '--', 'Color', [0 0 0], 'LineWidth', 2)
-    ylim([-0.05 0.05])
-else
-    yline(Gintercept, '--', 'Color', [0 0 0], 'LineWidth', 2)
-    ylim([-0.05+Gintercept 0.05+Gintercept])
-end
-xlim([0 8])
-ylim([-0.03 0.03])
-set(gca,'XTick',[])
-box off
-set(gca,'linewidth',2, 'YColor', [0 0 0]);
-set(gca,'linewidth',2, 'XColor', [0 0 0]);
-%title(condNames{x})
-set(gca, 'FontName', 'Arial', 'FontSize', 20);
-ax1 = gca;
-%ax1.YTick = [-0.03, -0.015, 0, 0.015, 0.03];
 
-% yticks = get(gca, 'ytick'); % Get current y-axis tick positions
-% text(0.5, mean(yticks), '\Delta', 'VerticalAlignment', 'baseline', 'FontSize', 20); % Add triangle symbol at (0.5, y) position
 
-% Get current y-axis label position
-ylabelHandle = ylabel('temp', 'FontSize', 20);
-ylabelPosition = get(ylabelHandle, 'Position');
-% Remove y-axis label
-delete(ylabelHandle);
 
-% Add triangle symbol in place of y-axis label
-y_pos = ylim;
-%text(ylabelPosition(1), mean(y_pos), '\Delta BOLD signal (%)', 'FontSize', 20, 'Rotation', 90, 'HorizontalAlignment', 'center');
-
-ylim([-0.5 0.5])
-ax1 = gca;
-ax1.YTick = [-0.5, -0.25 0, .25, 0.5];
-text(ylabelPosition(1), mean(y_pos), '\Delta standardized BOLD response', 'FontSize', 20, 'Rotation', 90, 'HorizontalAlignment', 'center');
-
-xticks(1:length(roinames))
-
-roinamesEdit = roinames;
-roinamesEdit{5} = "hMT+"; % edit the MT complex ; it was too long as 'MTcomplex'
-
-% Create a custom legend with the dummy plot objects
-legend([h1, h2], labelnames{1}, 'Location', 'best');
-
-xticklabels(roinamesEdit); % Set x-axis tick labels
-
-f1 = gcf;
-f1.Position = [298 843 651 494];
-
-[parentDirectory, ~, ~] = fileparts(saveDir);
-figDir = fullfile(parentDirectory, 'figures');
-
-% Save the figure as a TIFF file with specific options
-print(fullfile(figDir, condNames{x}), '-dtiff', '-r300'); % '-r300' specifies a resolution of 300 DPI

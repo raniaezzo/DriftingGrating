@@ -120,9 +120,9 @@ function plot2_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
 
         plot([1 2], [vals_1_overall vals_2_overall], 'k', 'LineWidth', 3)
         hold on
-        scatter(1, vals_1_overall, 70, 'MarkerFaceColor', colors{1}, 'MarkerEdgeColor', markerC, 'LineWidth',1.75, 'MarkerFaceAlpha', 0.5);
+        scatter(1, vals_1_overall, 70, 'MarkerFaceColor', colors{1}, 'MarkerEdgeColor', markerC, 'LineWidth',1.75); %, 'MarkerFaceAlpha', 0.5);
         hold on
-        scatter(2, vals_2_overall,  70, 'MarkerFaceColor', colors{2}, 'MarkerEdgeColor', markerC, 'LineWidth',1.75, 'MarkerFaceAlpha', 0.5);
+        scatter(2, vals_2_overall,  70, 'MarkerFaceColor', colors{2}, 'MarkerEdgeColor', markerC, 'LineWidth',1.75); %, 'MarkerFaceAlpha', 0.5);
         
         title(rois{regionIndex});
         ylabel('zscored PSC')
@@ -138,7 +138,7 @@ function plot2_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
                      pairaxes_PAew_limits.(projectName).(comparisonName).(ROI_category).max])
     
         if ii==1
-            if radialvstang && strcmp(projectName, 'da')
+            if radialvstang
                 lg1 = legend('Radial', 'Tangential', 'Location', 'northeast');
             else
                 lg1 = legend('Card', 'Obl', 'Location', 'northeast');

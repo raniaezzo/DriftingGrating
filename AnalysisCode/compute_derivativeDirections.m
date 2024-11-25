@@ -35,7 +35,11 @@ function newMatrix = compute_derivativeDirections(medianBOLDpa, projectSettings,
     comparisonName = projectSettings.comparisonName;
     contrasts_dict = projectSettings.contrasts_dict;
 
-    [proConditions, conConditions, allConditions] = retrieveProConIdx(projectName, comparisonName, radialvstang);
+    %[proConditions, conConditions, allConditions] = retrieveProConIdx(projectName, comparisonName, radialvstang);
+
+    % I think I always need to assume main cardinal, since radial / tang
+    % for dg is defined ad hoc, outside of this function
+    [proConditions, conConditions, allConditions] = retrieveProConIdx(projectName, comparisonName, 0);
 
     % Extract relevant motion direction indices
     motionDirectionIndices = allConditions;

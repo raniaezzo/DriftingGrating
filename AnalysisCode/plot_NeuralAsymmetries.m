@@ -12,7 +12,7 @@ fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
 glmResultsfolder = fullfile(bidsDir, 'derivatives', strcat(projectName, 'GLM'), strcat('hRF_', hRF_setting));
 
 % can be 'motion_minus_orientation' ; 'motion_minus_baseline' ; 'orientation_minus_baseline'
-comparisonName = 'orientation_minus_baseline';
+comparisonName = 'motion_minus_baseline';
 
 [rois, axes_limits, pairaxes_limits, pairaxes_PAew_limits, colors_data, contrasts_dict] = loadConfig(githubDir);
 
@@ -130,19 +130,21 @@ end
 % this will plot the derived conditions for:
 if strcmp(projectName, 'da') % experiment 2: da (cartesian cardinal vs oblique)
     n_derivedConditions = {{1:2, 3}};
-    radialvstang = 0; 
+    isradial = 0; 
 elseif strcmp(projectName, 'dg') % experiment 1: dg (polar cardinal vs oblique; and radial vs tangential)
     n_derivedConditions = {{1:2, 3}, {1, 2}};
-    radialvstang = [0, 1]; 
+    isradial = [0, 1]; 
 end
 
-% NOTE: this is an approximate definition, since they are derived by
-% estimates with/without curvature (closer to the locations 0-315 in 45
-% degree increments are more exact).
-
-newMatrix = compute_derivativeDirections(medianBOLDpa, projectSettings);
-
 for ci=1:numel(n_derivedConditions)
+
+    radialvstang = isradial(ci);
+
+    % NOTE: this is an approximate definition, since they are derived by
+    % estimates with/without curvature (closer to the locations 0-315 in 45
+    % degree increments are more exact).
+
+    newMatrix = compute_derivativeDirections(medianBOLDpa, projectSettings, radialvstang);
 
     % Average the values in the first two rows along the first dimension
     % (contrast)

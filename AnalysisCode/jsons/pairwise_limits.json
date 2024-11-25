@@ -15,16 +15,16 @@
     },
     "dg": {
         "motion_minus_orientation": {
-            "ROIs_early": {"min": -0.9, "max": 0.9},
-            "ROIs_motion": {"min": -0.4, "max": 0.4}
+            "ROIs_early": {"min": -1.25, "max": 1.5},
+            "ROIs_motion": {"min": -0.5, "max": 2.25}
         },
         "motion_minus_baseline": {
-            "ROIs_early": {"min": -1.0, "max": 1.0},
-            "ROIs_motion": {"min": -0.5, "max": 0.5}
+            "ROIs_early": {"min": -1.25, "max": 1.5},
+            "ROIs_motion": {"min": -0.5, "max": 2.25}
         },
         "orientation_minus_baseline": {
-            "ROIs_early": {"min": -1.1, "max": 1.1},
-            "ROIs_motion": {"min": -0.6, "max": 0.6}
+            "ROIs_early": {"min": -2, "max": 1.5},
+            "ROIs_motion": {"min": 0.75, "max": 3}
         }
     }
 }

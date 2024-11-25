@@ -88,7 +88,7 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
         
         % Average across the conditions within subjects
         if strcmp(projectName, 'da') && strcmp(comparisonName, 'orientation_minus_baseline') && radialvstang == 1 || ...
-                strcmp(asymmetryName, 'derivedCardinalVsDerivedOblique')
+                derivedVals == 1 %strcmp(asymmetryName, 'derivedCardinalVsDerivedOblique')
             avgConditions1 = conditions1;  % for orientation DA - there is only 1 value
             avgConditions2 = conditions2; 
         else
@@ -146,7 +146,7 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     
     
         if ri==1
-            if radialvstang==1 && strcmp(projectName, 'da')
+            if radialvstang==1
                 hLegend = legend('Radial', 'Tangential', 'Location', 'northwest', 'Box', 'off', 'FontSize', 18);
             else
                 hLegend = legend('Cardinal', 'Oblique', 'Location', 'northwest', 'Box', 'off', 'FontSize', 18);
