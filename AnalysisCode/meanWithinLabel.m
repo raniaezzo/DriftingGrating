@@ -19,7 +19,14 @@ hRF_setting = 'glmsingle'; % can be: 'canonical', 'glmdenoise', 'glmsingle';
 
 hemis = {'lh'; 'rh'};
 
-[rois, axes_limits, pairaxes_limits, pairaxes_PAew_limits, colors_data, contrasts_dict] = loadConfig(githubDir);
+projectSettings = loadConfig(githubDir);
+
+rois = projectSettings.rois;
+axes_limits = projectSettings.axes_limits;
+pairaxes_limits = projectSettings.pairaxes_limits;
+pairaxes_PAew_limits = projectSettings.pairaxes_PAew_limits;
+colors_data = projectSettings.colors_data;
+contrasts_dict = projectSettings.contrasts_dict;
 
 % contrastnames = {contrasts_dict.contrasts.(strcat(projectName, '_contrast_name'))};
 % for now, only use DG names -- they apply to both DG and DA b/c directions
