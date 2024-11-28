@@ -69,11 +69,11 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     gap = [.04 .01]; % spacing between the subplots vertical gap - horizontal gap
     marg_h = [.015 .13]; % margins of bottom - top of the figure
     marg_w = [.01 .01]; % margina - left, right
-    [ha, pos] = tight_subplot(2, 4, gap, marg_h, marg_w);
+    [ha, pos] = tight_subplot(2, 5, gap, marg_h, marg_w);
     % Hide the 8th subplot
-    emptyPlots = 8 - numel(rois);
+    emptyPlots = 10 - numel(rois);
     for ep=1:emptyPlots
-        empty_idx = 8+1-ep;
+        empty_idx = 10+1-ep;
         set(ha(empty_idx), 'Visible', 'off');
     end
     for ri=1:length(rois)

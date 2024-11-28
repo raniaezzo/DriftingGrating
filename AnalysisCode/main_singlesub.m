@@ -7,7 +7,7 @@ tr_s = 1;
 
 % setup path
 addpath(genpath(pwd));
-projectName = 'dg'; % 'dg', or 'dgl' or 'da'
+projectName = 'da'; % 'dg', or 'dgl' or 'da'
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
 %bidsDir = '/Volumes/server/Projects/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
@@ -33,8 +33,8 @@ end
 
 resampling = 0; % means fit fully (don't bootstrap or cross-validate)
 
-subj = 'sub-wlsubj127'; %'sub-0426';
-ses = 'ses-nyu3t02'; %'ses-01'; %'ses-nyu3t02'; %'ses-01';
+subj = 'sub-0426'; %'sub-0426';
+ses = 'ses-03'; %'ses-01'; %'ses-nyu3t02'; %'ses-01';
 space = 'fsnative';
 rois = {'mt','mstL','mstR','fst'};
 derivativesFolder = fullfile(bidsDir, 'derivatives', sprintf('%sGLM',projectName), ...

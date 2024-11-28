@@ -12,7 +12,7 @@ fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
 glmResultsfolder = fullfile(bidsDir, 'derivatives', strcat(projectName, 'GLM'), strcat('hRF_', hRF_setting));
 
 % can be 'motion_minus_orientation' ; 'motion_minus_baseline' ; 'orientation_minus_baseline'
-comparisonName = 'motion_minus_baseline';
+comparisonName = 'orientation_minus_baseline';
 
 projectSettings = loadConfig(githubDir);
 
@@ -23,7 +23,7 @@ pairaxes_PAew_limits = projectSettings.pairaxes_PAew_limits;
 colors_data = projectSettings.colors_data;
 contrasts_dict = projectSettings.contrasts_dict;
 
-rois = rois(1:7); % remove once I process v3a / v3b
+%rois = rois(1:7); % remove once I process v3a / v3b
 
 %% Load and remove subject with extreme motion
 
@@ -92,7 +92,7 @@ projectSettings.figureDir = figureDir;
 % e.g. condition indices 4 v 5: clearly shows MT as motion responsive
 % these do not depend on polar angle / retinotopy (just contrasts)
 
-condIdx1 = 11;   
+condIdx1 = 9;   
 condIdx2 = 8;
 
 plot0_experimentalCond(condIdx1, condIdx2, medianBOLD, projectSettings)

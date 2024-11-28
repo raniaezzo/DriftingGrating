@@ -6,7 +6,7 @@ clear all; close all; clc;
 
 % setup path
 addpath(genpath(pwd));
-projectName = 'dg'; % 'dg', or 'dgl' or 'da'
+projectName = 'da'; % 'dg', or 'dgl' or 'da'
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
 %bidsDir = '/Volumes/server/Projects/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
@@ -21,7 +21,7 @@ setup_user('rania', bidsDir)
 projectSettings = loadConfig(githubDir);
 
 hRF_setting = 'glmsingle'; %
-subjects = {'sub-wlsubj121', 'sub-wlsubj127'}; %{'sub-0426', 'sub-wlsubj123', 'sub-wlsubj124', 'sub-0255', 'sub-0037'};
+subjects = {'sub-0037'}; %{'sub-0426', 'sub-wlsubj123', 'sub-wlsubj124', 'sub-0255', 'sub-0037'};
 %{'sub-0201', 'sub-0250', 'sub-0427', 'sub-0426', 'sub-0397', 'sub-wlsubj123', 'sub-wlsubj124', 'sub-0255', 'sub-0037'};
 %subj = 'sub-0442'; %'sub-0426';
 

@@ -127,8 +127,8 @@ for ri=1:numel(rois)  % specific to the ROI
             subplot(3,2,iter)
 
             % copied over for now; condense with ttave_fit LATER
-            rawVals = mean(group_ttave_arrays.(roiName).(asymmetryName).(projectName),3);
-            fittedVals = mean(group_ttave_arrays.(roiName).(asymmetryName).(strcat(projectName, '_fits')),3);
+            rawVals = median(group_ttave_arrays.(roiName).(asymmetryName).(projectName),3);
+            fittedVals = median(group_ttave_arrays.(roiName).(asymmetryName).(strcat(projectName, '_fits')),3);
 
             advMotionVals = rawVals(1,:);
             disadvMotionVals = rawVals(2,:);
@@ -177,7 +177,7 @@ for ri=1:numel(rois)  % specific to the ROI
             end
 
             %plot(grandMean, '-', 'Linewidth',3, 'Color', 'k')
-            ylim([-.5 1.75])
+            ylim([-.5 1.5])
             set(gca, 'FontName', 'Arial', 'FontSize', 12)
 
 
