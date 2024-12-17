@@ -68,8 +68,8 @@ motiondirs = cellfun(@(match) str2double(match{1}), matches);
 
 polarAngles = [0, 45, 90, 135, 180, -135, -90, -45];
 polarAngleBinWidth = 45; %45; % degrees
-minECC = 1; %0.2; 
-maxECC = 15;
+minECC = 4; %1; 
+maxECC = 8; %15;
 minVAREXP = .1; %0.25;
 
 % initialize a matrix for contrasts, rois, subjects

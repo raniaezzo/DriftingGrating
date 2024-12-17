@@ -4,7 +4,7 @@ clc; clear all; close all;
 
 % set up
 addpath(genpath(pwd));
-projectName = 'da';
+projectName = 'dg';
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
 hRF_setting = 'glmsingle';
@@ -12,7 +12,7 @@ fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
 glmResultsfolder = fullfile(bidsDir, 'derivatives', strcat(projectName, 'GLM'), strcat('hRF_', hRF_setting));
 
 % can be 'motion_minus_orientation' ; 'motion_minus_baseline' ; 'orientation_minus_baseline'
-comparisonName = 'orientation_minus_baseline';
+comparisonName = 'motion_minus_orientation';
 
 projectSettings = loadConfig(githubDir);
 

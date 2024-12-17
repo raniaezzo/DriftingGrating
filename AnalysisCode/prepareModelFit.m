@@ -10,9 +10,16 @@ fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
 glmResultsfolder = fullfile(bidsDir, 'derivatives', strcat(projectName, 'GLM'), strcat('hRF_', hRF_setting));
 
 % can be 'motion_minus_orientation' ; 'motion_minus_baseline' ; 'orientation_minus_baseline'
-comparisonName = 'orientation_minus_baseline';
+comparisonName = 'motion_minus_orientation';
 
-[rois, axes_limits, pairaxes_limits, pairaxes_PAew_limits, colors_data, contrasts_dict] = loadConfig(githubDir);
+projectSettings = loadConfig(githubDir);
+
+rois = projectSettings.rois;
+axes_limits = projectSettings.axes_limits;
+pairaxes_limits = projectSettings.pairaxes_limits;
+pairaxes_PAew_limits = projectSettings.pairaxes_PAew_limits;
+colors_data = projectSettings.colors_data;
+contrasts_dict = projectSettings.contrasts_dict;
 
 rois = rois(1:7); % remove once I process v3a / v3b
 metric = 'bold';
@@ -238,7 +245,7 @@ asymmetryNames = {'mainCardinalVsMainOblique', 'derivedCardinalVsDerivedOblique'
 %all_labels = {{'Main Cardinal', 'Main Oblique'}, {'Derived Cardinal', 'Derived Oblique'}, {'Radial', 'Tangential'}};
 
 ci_level = 68; %68;
-meanRelative=1;
+meanRelative=0;
 %colors = [[127 191 123]/255; [166 97 26]/255; [146 197 222]/255];
 %colors2 = [[175 141 195]/255; [64 176 166]/255; [202 0 32]/255];
 
