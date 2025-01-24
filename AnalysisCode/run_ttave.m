@@ -6,7 +6,7 @@ clear all; close all; clc;
 
 % setup path
 addpath(genpath(pwd));
-projectName = 'da'; % 'dg', or 'dgl' or 'da'
+projectName = 'dg'; % 'dg', or 'dgl' or 'da'
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
 %bidsDir = '/Volumes/server/Projects/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
@@ -21,9 +21,9 @@ setup_user('rania', bidsDir)
 projectSettings = loadConfig(githubDir);
 
 hRF_setting = 'glmsingle'; %
-subjects = {'sub-0426'}; %{'sub-0426', 'sub-wlsubj123', 'sub-wlsubj124', 'sub-0255', 'sub-0037'};
-%{'sub-0201', 'sub-0250', 'sub-0427', 'sub-0426', 'sub-0397', 'sub-wlsubj123', 'sub-wlsubj124', 'sub-0255', 'sub-0037'};
-%subj = 'sub-0442'; %'sub-0426';
+subjects = {'sub-0250'}; %{'sub-0426', 'sub-wlsubj123', 'sub-wlsubj124', 'sub-0255', 'sub-0037', ...
+ %'sub-0201', 'sub-0395', 'sub-0397', 'sub-0442', 'sub-0427', 'sub-wlsubj121', 'sub-wlsubj127'};
+ %{'sub-0250'}; %
 
 %%
 for ss=1:numel(subjects)
@@ -73,8 +73,8 @@ for ss=1:numel(subjects)
     
     % filter params
     projectSettings.polarAngleBinWidth = 45; %45; % degrees
-    projectSettings.minECC = 1; %0.2; 
-    projectSettings.maxECC = 15;
+    projectSettings.minECC = 4; %0.2; 
+    projectSettings.maxECC = 8;
     projectSettings.minVAREXP = .1; %0.25;
     projectSettings.stimdur_s = 3;
     projectSettings.tr_s = 1;

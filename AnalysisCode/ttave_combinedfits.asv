@@ -106,7 +106,7 @@ if ~isfolder(ttave_combinedGroupPath)
 end
 
 pointer=1;
-for ri=5:5 %1:numel(rois)  % specific to the ROI
+for ri=1:numel(rois)  % specific to the ROI
 
     roiName = rois{ri};
 
@@ -202,12 +202,6 @@ for ri=5:5 %1:numel(rois)  % specific to the ROI
                     scatter(repmat(x(i), 1, size(fittedpeakVals, 2)), fittedpeakVals(i, :), 100, 'MarkerEdgeColor', currentColor); % Plot each row
                 end
             end
-            for i = 1:size(mot_minus_ori_peaks, 2) % Loop through each column (pair of values)
-                plot([1,2], fittedpeakVals(1:2, i), 'k-', 'LineWidth', 1.5); % Connect the two points with a line
-                hold on
-                plot([3,4], fittedpeakVals(3:4, i), 'k-', 'LineWidth', 1.5); % Connect the two points with a line
-                hold on
-            end
             hold off;
             
             % Add labels
@@ -238,7 +232,7 @@ for ri=5:5 %1:numel(rois)  % specific to the ROI
             xlim([0 3])
             xlabel('condition');
             ylabel('peak');
-            %title('Drifting Grating (left) vs Annulus (Right): Motion - Ori')
+            title('Drifting Grating (left) vs Annulus (Right): Motion - Ori')
             xticks([])
         end
 

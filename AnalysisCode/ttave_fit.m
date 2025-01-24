@@ -20,7 +20,7 @@ setup_user('rania', bidsDir)
 projectSettings = loadConfig(githubDir);
 
 hRF_setting = 'glmsingle'; %
-subj = 'sub-0395'; %'sub-0426';
+subj = 'sub-0250'; %'sub-0426';
 %ses = 'ses-03'; %'ses-01'; %'ses-nyu3t02'; %'ses-01';
 
 projects = {'dg','da'};

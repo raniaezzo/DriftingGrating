@@ -33,7 +33,7 @@ end
 
 resampling = 0; % means fit fully (don't bootstrap or cross-validate)
 
-subj = 'sub-0426'; %'sub-0426';
+subj = 'sub-0250'; %'sub-0426';
 ses = 'ses-03'; %'ses-01'; %'ses-nyu3t02'; %'ses-01';
 space = 'fsnative';
 rois = {'mt','mstL','mstR','fst'};
