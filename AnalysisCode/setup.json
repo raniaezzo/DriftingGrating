@@ -1,0 +1,32 @@
+{
+    "bidsdir": {
+        "LongName": "BIDS data directory",
+        "Description": "Directory with the BIDS subject folders.",
+        "Path": "/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/"
+    },
+    "expoutputdir": {
+        "LongName": "Experimental design output directory",
+        "Description": "Directory with the design matrices saved out from psychtoolbox scripts.",
+        "Path": "/Volumes/Vision/UsersShare/Rania/Project_dg/experimentalOutput"
+    },
+    "protocols": {
+        "LongName": "Protocol name abbreviations",
+        "Description": "dg is drifting grating and da is drifting annulus",
+        "names": ["dg","da"]
+    },
+    "edf2ascdir": {
+        "LongName": "EDF2ASC directory",
+        "Description": "This is where the conversion functions live (required to run the conversion of raw eyelink files.",
+        "Path": "/usr/local/bin/edf2asc"
+    },
+    "stimdur_s": {
+        "LongName": "Stimulus duration",
+        "Description": "Duration in seconds of the grating stimulus",
+        "Val": 3
+    },
+    "tr_s": {
+        "LongName": "Repetition time of MR sequence",
+        "Description": "Duration in seconds",
+        "Val": 1
+    }
+}

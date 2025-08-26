@@ -1,0 +1,14 @@
+{
+    "ROIs": [
+        {
+            "plotname": "V1",
+            "filename": "V1",
+            "index": 1
+        },
+        {
+            "plotname": "hMT+",
+            "filename": "hMTcomplex",
+            "index": 5
+        }
+    ]
+}

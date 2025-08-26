@@ -1,66 +1,151 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2580
+{\rtf1\ansi\ansicpg1252\cocoartf2761
 \cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
 {\*\expandedcolortbl;;}
-\margl1440\margr1440\vieww16140\viewh12160\viewkind0
+\margl1440\margr1440\vieww22040\viewh22260\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
 \f0\fs36 \cf0 #README: Drifting Grating \
 \
-TO DO:\
--double check that the y is not flipped, output from PRF VISTA\
--add a path direct (for sawtooth) in DG pipeline\
--Figure out if radial is defined correctly.\
+Set up instructions:\
+Before running scripts, please ensure freesurfer and FSL are installed, and if converting Eyelink EDF files, also will require SR Research function edf2asc (which will require an SR Research account) - this is not necessary if using the provided processed eye tracking data. \
 \
-Description of scripts in DriftingGrating Folder:\
+For custom path setup: Please open general/setup_user.m script and add a new custom username with the path to your installed FSL, freesurfer, and GitHub directory (which contains DriftingGrating). All required toolboxes and their URLs are provided in this setup_user.m script. Note: if re-running GLM fits, will need GLMsingle (https://github.com/cvnlab/GLMsingle) to replicate data. Optional alternatives are available within processing scripts to run manual GLM or use GLMdenoise (https://github.com/cvnlab/GLMdenoise).\
+Any script that calls setup_user() must have input with your username.\
 \
-main_singlesub.m : script that processes a single subject\'92s drifting grating data, by loading fMRIprep func output, the design files from the experiment, runs GLM, and then saves output. Also plots the trial triggered average. It saves a bunch of contrast maps to derivatives folder called dgGLM.\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
 \
-		setup_user() : adds a bunch of dependencies to the path, including free surfer.\
+Description of scripts in DriftingGrating/AnalysisCode:\
 \
-		format_desmats() : formats the design matrices from the experiment into a maxtrix for GLM\
+process_singlesubjectGLM contains scripts related to fitting the GLM to single subject data.\
 \
-		addnuissancemats() : adds nuisance regressors from the fMRIprep output to the GLM matrix\
+	main_singlesub.m : script that processes a single subject\'92s drifting grating data, by loading fMRIprep func output, the design files from the experiment, runs GLM, and then saves output. Also plots the trial triggered average. It saves a bunch of contrast maps to derivatives folder called dgGLM.\
 \
-		load_data() : loads the files functional data from fMRIprep folder\
+			general/setup_user() : adds a bunch of dependencies to the path, including free surfer.\
 \
-		get_surfsize() : gets the surface size of a subject\'92s free surfer cortex\
+			format_desmats() : formats the design matrices from the experiment into a maxtrix for GLM\
 \
-		getROIidxs : gets the indices of the ROI\
+			addnuissancemats() : adds nuisance regressors from the fMRIprep output to the GLM matrix\
 \
-		GLMestimatemodel() : runs the GLM model using Kendrick Kay\'92s GLMdenoise\
+			load_data() : loads the files functional data from fMRIprep folder\
 \
-		ttave() : plot trial triggered average\
+			general/get_surfsize() : gets the surface size of a subject\'92s free surfer cortex\
 \
-		calculateBeta() : another method of GLM (manual for sanity)\
+			getROIidxs : gets the indices of the ROI\
 \
-		writeMGZfile() : writes the mgz\
+			../GLMdenoise/GLMestimatemodel() : runs the GLM model using Kendrick Kay\'92s GLMdenoise\
+\
+			../GLMsingle/GLMestimatesingletrial() : runs the GLM model using Kendrick Kay\'92s GLMsingle\
+\
+			general/writeMGZfile() : writes the mgz\
+\
+02_process_eyedata: contains scripts related to the conversion and processing of Eyelink\'92s EDF files.\
+\
+	analyzeDG_eyedata.m\
+\
+	convert_dgEDF.m : converts EDF to ASC/DAT for later extraction\
+\
+	extractMetadata.m: gets the meta data and puts into a table.\
+\
+	extractTimestamps.m : preprocess the run based on event labels (creates a timestamp table). Output is used for extractEyeposition() later.\
+\
+	extractEyeposition.m: put all the .dat matrix data (x,y,pupil) and put into a matrix (52 trials x time)\
+\
+ttave contains scripts related to computing/plotting the trial triggered average per subject and across subjects\
+\
+	run_ttave.m : runs ttave for each subject, each ROI.\
+\
+		retriveRetData() : gets the indices for on the surface that matches the given eccentricity / varExp, and bins the polar angle.\
+\
+		ttave_compute() : computes the array with the trial triggered average per condition\
+\
+		ttave_computeGLMsingke() : computes the array with the reconstructed convolved hFs and betas from GLMsingle\
+\
+			plot_ttave() : plots the ttave per condition\
+\
+	run_ttaveGroup.m : runs and plots the ttave combination across all subjects.\
+\
+	ttave_fit.m : for a given subject, for a given ROI, for a given global configuration, compute and plot the mean signal across each asymmetry condition.\
+\
+		findScalar() : computes the scalar and intercept for the time series relative to the mean.\
+\
+	ttave_combinedfits.m : combines all the fits across subjects.\
+\
+	getSubjectTTaxis.m : provides list of custom axes for each subject\'92s ttave. <double check whether this is necessary given the JSON is also there).\
 \
 \
-meanWithinLabel.m : organizes data into gigantic matrices:\
-	(1) meanBOLD (contrasts, rows, subjects),\
-	(2) meanBOLDpa (contrasts , polar angle bin, roi , subjects), \
-	(3) allvoxelsBOLDpa (contrasts, polar angle bin, roi, subjects),\
-	(4) allparamsBOLDpa (contrasts, polar angle bin, roi, PARAM, subjects), \
-	where	param==1 is polar angle value\
-			param==2 is eccentricity\
-			param==3 is r^2 \
-			param==4 (THIS IS INCORRECT DO NOT USE) - polar angle magnitude\
+process_groupBetas contains related scripts to combine values (e.g., BETAS) across subjects\
 \
-		read_label() : free surfer function\
+	meanWithinLabel.m : organizes data into gigantic matrices across all subjects:\
+		(1) meanBOLD (contrasts, rows, subjects),\
+		(2) meanBOLDpa (contrasts , polar angle bin, roi , subjects), \
+		(3) allvoxelsBOLDpa (contrasts, polar angle bin, roi, subjects),\
+		(4) allparamsBOLDpa (contrasts, polar angle bin, roi, PARAM, subjects), \
+		where	param==1 is polar angle value\
+				param==2 is eccentricity\
+				param==3 is r^2 \
+				param==4 (THIS IS INCORRECT DO NOT USE) - polar angle magnitude\
 \
+			read_label() : free surfer function\
 \
-boldHistograms.m : \
+plot_betaAsymmetries contains plotting functions for polar plots, and pairwise plots across subjects per asymmetry.\
 \
-		map_theta() : converts Benson atlas polar angle units (0 to +-180; 0 as UVM and +90 being right visual field) to conventional units (0 to 360 starting from RHM going counterclockwise)\
+	plot_NeuralAsymmetries() :  calls plot0, plot1, and plot2 below.\
 \
+		compute_derivativeDirections() : gets the derivative directions (radial for the cartesian condition, etc.)\
 \
-prepareModelFit.m : \
+			deriveLocalMotionfromUVM() : this function is required to map the local motion of the polar global configuration.\
 \
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-\cf0 ~~~~~\
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-\cf0 \
+		plot0_experimentalCond() : plots a generic comparison between any 2 contrasts.\
+\
+		plot1_experimentalCond() : plot the polar plots of the averages per condition that do not need to be derived per polar angle. For dg, this will inlcude cardinal vs. oblique. For da, this will include polar cardinal vs. polar oblique and radial vs. tangential.\
+\
+		plot2_experimentalCond() : plot mean across polar angles (equally weighs each polar angle).\
+\
+	fitLME() : computes and fits LME with bootstrapped samples (group level)\
+\
+		retrieveProConIdx() : provides the contrast indices for the expected benefit / detriment per condition.\
+\
+plotBOLD2VF contains scripts related to potting BETAs to visual field coordinates\
+\
+	boldHistograms.m : plots the BETAs per condition to the visual field (either per subject, or group level)\
+\
+process_eyedata contains scripts to convert and process EDF files from Eyelink\
+\
+	analyzeDG_eyedata.m : analyzes and plot the eye data for subjects\
+\
+		convert_dgEDF() : uses Eyelink function edf2asc to convert EDF file to ASC and MSG files\
+\
+		extractEyeposition() : gets the .dat and puts it all in a matrix (52 x time)\
+\
+		extractmsgMetadata() : extracts meta-data such as sampling rate, calibration method, eye, quality, error, offset, etc.\
+\
+		extractTimestamps() : creates a timestamp table for trials\
+\
+general scripts folder:\
+\
+	get_surfsize.m : \
+\
+	getROIidxs.m :\
+\
+	loadConfig.m : \
+\
+	setup_user.m :\
+\
+	writeMGZfile.m :\
+\
+	fitFig2Page.m : \
+\
+	tight_subplot.m : \
+\
+	map_theta() : converts Benson atlas polar angle units (0 to +-180; 0 as UVM and +90 being right visual field) to conventional units (0 to 360 starting from RHM going counterclockwise)\
+\
+display_freeview contains scripts that call Freeview to show maps on the surface.\
+\
+	view_fv.m : view overlay of retinotopy and labels on subject\'92s inflated surface. Option to take screenshots.\
+\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ review below ~~~~~~~~~~~~~~~~~~~~~~~~~`\
+\
 Description of scripts in reToolbox Folder:\
 \
 arithMGZ() : performs any arithmetic operations across MGZs.\
@@ -92,4 +177,6 @@ SCRAP (DELETE LATER IF UNUSED):\
 - view_maps()\
 - visualize()\
 - visualize_results_flatmaps()\
+- ttave_old() : plot trial triggered average\
+- calculateBeta() : another method of GLM (manual for sanity)\
 }

@@ -1,0 +1,31 @@
+{
+    "da": {
+        "motion_minus_orientation": {
+            "ROIs_early": {"min": -0.5, "max": 2},
+            "ROIs_motion": {"min": -0.5, "max": 2}
+        },
+        "motion_minus_baseline": {
+            "ROIs_early": {"min": -1, "max": 2.5},
+            "ROIs_motion": {"min": -1, "max": 2.5}
+        },
+        "orientation_minus_baseline": {
+            "ROIs_early": {"min": -1, "max": 2.5},
+            "ROIs_motion": {"min": -1, "max": 2.5}
+        }
+    },
+    "dg": {
+        "motion_minus_orientation": {
+            "ROIs_early": {"min": -0.5, "max": 2},
+            "ROIs_motion": {"min": -0.5, "max": 2}
+        },
+        "motion_minus_baseline": {
+            "ROIs_early": {"min": -1, "max": 2.5},
+            "ROIs_motion": {"min": -1, "max": 2.5}
+        },
+        "orientation_minus_baseline": {
+            "ROIs_early": {"min": -1, "max": 2.5},
+            "ROIs_motion": {"min": -1, "max": 2.5}
+        }
+    }
+}
+
