@@ -1,0 +1,126 @@
+% SIMULATE DATA
+
+%Define location and direction values
+angles = 0:45:315;
+
+% Generate all combinations of location and direction
+[locGrid, dirGrid] = ndgrid(angles, angles);
+
+% Flatten the grids
+location = locGrid(:);
+direction = dirGrid(:);
+
+% Simulate BOLDave and BOLDmed values between 0 and 1
+numEntries = numel(location);
+BOLDave = rand(numEntries, 1);
+BOLDmed = rand(numEntries, 1);
+
+% Create the table
+avemodeldata = table(BOLDave, BOLDmed, location, direction);
+
+% Display the table
+disp(avemodeldata);
+
+
+%%
+
+subj = 'ALL';
+metric = 'BOLDave';
+
+% load in a table AVEmodeldata that contains columns for average BOLD,
+% location, and direction
+%avemodeldata = readtable(strcat('/Users/rania/Desktop/RadialBias_pilot1/Analysis/Modeldata/AVE_modeldata.csv'));
+
+figure
+plot(0,0,'+k','MarkerSize',12, 'linewidth',3)
+axis square
+hold on
+xlim([-4 4])
+ylim([-4 4])
+xticks([]) 
+yticks([]) 
+xticklabels({}) 
+yticklabels({})
+p = get(gca, 'Position');
+
+box on
+set(gca,'linewidth',1, 'YColor', [0 0 0]);
+set(gca,'linewidth',1, 'XColor', [0 0 0]); 
+
+
+width = p(3)-p(3)*.835; height = p(4)-p(4)*.8;
+left = p(1)+p(3)/2-(width/2); bottom = p(2)+p(4)/2-(height/2);
+origin = [left bottom width height];
+
+straight = 1.6; diag = 1.1;
+shifts = {[width*straight 0 0 0], [width*diag height*diag 0 0], [0 height*straight 0 0], ...
+    [-width*diag height*diag 0 0], [-width*straight 0 0 0], [-width*diag -height*diag 0 0], ...
+    [0 -height*straight 0 0], [width*diag -height*diag 0 0]};
+
+N = [0 45 90 135 180 225 270 315];
+
+%%
+for pos = 1:length(N) % location
+
+    shift = shifts{pos}
+
+    pax = polaraxes(gcf);
+    set(pax, 'Position', origin+shift) %0.1300 0.1100
+    
+    
+    temp = [.5 .5 .5 .5 .5 .5 .5 .5]'; %recon.sum(idx(pos):idx(pos)+7); % modelled data
+    rho = temp';
+    rho = [rho rho(1)];
+    
+    polarplot(deg2rad([0 45 90 135 180 225 270 315 0]), rho, 'r', 'linewidth', 2)
+    hold on
+    q=polarplot(deg2rad([0 45 90 135 180 225 270 315 0]), rho, 'o', 'LineWidth', 2, 'MarkerFaceColor', 'r', 'MarkerSize', 12);
+    q.MarkerEdgeColor = 'w';
+    hold on
+    
+    % Get the BOLD values for those 8 directions at those locations
+    targetLocation = N(pos);  % Replace with the location you want (e.g. 90)
+    
+    % Find rows matching the target location
+    rows = avemodeldata.location == targetLocation;
+    
+    % Extract direction values and sort them
+    temp = sort(avemodeldata.direction(rows));
+    %
+    
+    rho = temp';
+    %rho = [rho(d_idx(1)), rho(d_idx(2)), rho(d_idx(3)), rho(d_idx(4)), ...
+    %    rho(d_idx(5)), rho(d_idx(6)), rho(d_idx(7)), rho(d_idx(8))];
+    
+    p = polarplot(deg2rad([0 45 90 135 180 225 270 315]), rho, 'ok', 'LineWidth', 1, 'MarkerFaceColor', 'black', 'MarkerSize', 8); %8); %4);
+    p.MarkerEdgeColor = 'w';
+    pax.FontSize = 6;
+    pax.RTickLabel = {''};
+    pax.ThetaTickLabel = {''};
+    thetaticks(0:45:315);
+    rlim([0 1])
+    hold on
+    
+    
+end
+ 
+% % This is to compute R^2 of model predictions for mean data
+% pred = recon.sum;
+% actual = avemodeldata.mean_sensitivity;
+% MSE = (1/(64))*(sum((actual-pred).^2));
+% R2 = 1 - (MSE/var(actual)); % only for mean data.
+% 
+% % marginal vs. conditional R2 (per datapoint)
+% marg = fitted(lme, 'Conditional', false);
+% cond = fitted(lme);
+% actual_all = modeldata.(metric);
+% 
+% % actual r^2 values
+% r_squared_from_cond = 1-(sum((actual_all-cond).^2)/sum((actual_all-mean(actual_all)).^2));
+% r_squared_from_marg = 1-(sum((actual_all-marg).^2)/sum((actual_all-mean(actual_all)).^2));
+% 
+% cond_var_ratio = var(cond)/var(actual_all);
+% marg_var_ratio = var(marg)/var(actual_all);
+
+
+% saveas(gcf,strcat(fullfile(figuredir, 'png/'), subj, '_m', string(mi), sprintf('_est_%s',metric)), 'png') %'epsc')

@@ -1,0 +1,327 @@
+%% Temporal channels
+normL2  = @(x) x./norm(x);
+makeIRF = @(A, B, C, t)(t/A).^8 .* exp(-t/A) - 1 / B .* (t/C).^9 .* exp(-t/C);
+% These values are from Table 1, row 1 (subject DT) in :
+%   McKee and Taylor, JOSA 1984
+% Presumably used by Horiguchi et al 2009
+A = 3.29;
+B = 14;
+C = 3.85;
+a = 2.75;
+b = 11;
+c = 3.18;
+% make foveal channel impulse response
+srate = 1000;
+t   = (0:999)'; % in millisecondsf
+irf_foveal = normL2(makeIRF(A, B, C, t));
+% make peripheral channel impulse response
+irf_peripheral = normL2(makeIRF(a, b, c, t));
+% make transient and sustained IRFs as weighted sums of foveal and
+%  peripheral IRFs
+w = sum(irf_peripheral) / sum(irf_foveal );
+irf_transient = normL2(irf_peripheral - w*irf_foveal);
+w = 0.5;
+irf_sustained = normL2(irf_foveal - w*irf_peripheral);
+% debug: Compare to figure 7 (inset) in Horiguchi et al, 2009
+% figure, 
+% plot(t, irf_sustained, 'b-', ...
+%     t, irf_transient, 'k-', 'LineWidth', 3); axis padded; xlim([0 100]);
+% legend('Transient channel', 'Sustained Channel')
+% set(gca, FontSize=12, YTick=[])
+% xlabel('Time (ms)')
+% ylabel('Impulse Response')
+
+%f = (0:length(t)-1)*(1000/max(t));
+f = (0:length(t)-1)*(srate / length(t)); % RE FIX
+
+mtf_transient = abs(fft(irf_transient));
+mtf_sustained = abs(fft(irf_sustained));
+figure, 
+subplot(211)
+plot(t, irf_sustained, 'b-', ...
+    t, irf_transient, 'k-', 'LineWidth', 3); axis padded; xlim([0 100]);
+legend('Sustained channel', 'Transient Channel')
+set(gca, FontSize=12, YTick=[])
+xlabel('Time (ms)')
+ylabel('Impulse Response')
+subplot(212)
+plot(f, mtf_transient, 'k', f, mtf_sustained, 'b', ...
+    f([1 9]), mtf_transient([1 9]), 'ko', ...
+    f([1 9]), mtf_sustained([1 9]), 'bo', ...
+    LineWidth=3, MarkerSize=10);
+axis padded;
+xlim([-5 50])
+set(gca, FontSize=12, YTick=[])
+xlabel('Temporal frequency (Hz)')
+ylabel('MTF')
+xline(0, 'k--', 'LineWidth', 1)
+xline(8, 'k--', 'LineWidth', 1)
+
+%% Assumptions
+% Simulate stimulus modulation at different temporal frequencies
+% We'll use the MTFs (Modulation Transfer Functions) as proxies for response amplitude
+
+% Define temporal frequencies of interest
+freqs = [0, 8];  % 0 Hz = stationary, 8 Hz = motion
+
+% Extract MTF amplitudes at those frequencies
+% Note: Since f is in Hz, f(1) = 0 Hz, f(9) = 8 Hz (as sampled at 1 Hz increments)
+stationary_idx = find(f == 0);  % Index for 0 Hz
+motion_idx     = find(f == 8);  % Index for 8 Hz
+
+% Get response amplitudes from MTFs
+resp_sust_0Hz = mtf_sustained(stationary_idx);
+resp_sust_8Hz = mtf_sustained(motion_idx);
+
+resp_trans_0Hz = mtf_transient(stationary_idx);
+resp_trans_8Hz = mtf_transient(motion_idx);
+
+% Total neural response at each frequency is sum of transient + sustained
+resp_0Hz_total = resp_sust_0Hz + resp_trans_0Hz;
+resp_8Hz_total = resp_sust_8Hz + resp_trans_8Hz;
+
+% Subtracted (8 Hz - 0 Hz)
+resp_diff = resp_8Hz_total - resp_0Hz_total;
+
+% Also decompose the diff into sustained vs transient components
+resp_diff_sust = resp_sust_8Hz - resp_sust_0Hz;
+resp_diff_trans = resp_trans_8Hz - resp_trans_0Hz;
+
+%%
+
+% Define bar values, inserting NaN as a spacer between bars 2 and 3
+barValues = [resp_0Hz_total, resp_8Hz_total, NaN, resp_diff_sust, resp_diff_trans];
+
+% Plot the bar chart
+figure;
+h = bar(barValues, 0.6);
+
+grey = [0.5 0.5 0.5];
+blue = [0 0 1];
+black = [0 0 0];
+
+% Apply colors
+h.FaceColor = 'flat';  % Enable per-bar coloring
+
+% Assign colors to each bar (NaN bar will be ignored)
+h.CData(1,:) = grey;
+h.CData(2,:) = grey;
+% h.CData(3,:) is skipped (NaN, not plotted)
+h.CData(4,:) = blue;
+h.CData(5,:) = black;
+
+% Set custom x-axis labels (empty label for the NaN spacer)
+xticklabels({'0 Hz Total', '8 Hz Total', '', 'Δ Sustained', 'Δ Transient'})
+
+set(gca, 'FontSize', 12)
+ylabel('Response amplitude')
+title('Channel Contributions to Subtracted Response')
+
+% CHANNELS ARE POPULATION-LEVEL RESPONSE PROFILES.
+
+% If all else is equal (same temporal frequency, contrast, spatial frequency, etc.), 
+% then differences in BOLD across directions (e.g., higher response for cardinal than oblique) 
+% must reflect tuning to direction — not general motion or flicker sensitivity.
+      % by subtracting orientation we first focus on high temporal
+      % frequency channel.
+      % then by comparing motion directions after this subtraction
+
+% The only variable is motion direction, so any systematic variation (e.g., cardinal > oblique) 
+% strongly suggests neuronal populations tuned to direction, and not just motion detection.
+
+
+% 1) Subtraction of stationary from drifting stimuli reduces the contribution of the 
+% sustained channel (which responds similarly to both), leaving a signal dominated by the transient channel.
+
+% 2) Direction-selective neurons are disproportionately present in the transient channel, especially in V1 
+% and motion-related areas.
+
+% 3) Directional differences (e.g., cardinal vs. oblique) within the transient response strongly imply 
+% direction-selectivity, because direction is the only feature changing.
+
+% 4) Therefore, this subtraction isolates direction-selective responses.
+
+
+% -- I think the logic holds up if the majority of high temporal freq.
+% neurons are direction selective. I am isolating high temp freq., but axis
+% of motion (right and left) would both have high responses if not
+% direction-selective; this would lead to a large "horizontal effect"
+    % the only other way to interpret, is that there is an AXIS selectivity
+    % (right-left motion would just be vertical orientation)
+    % this might be a better route to take b/c we see these effects in
+    % non-DS areas (nonetheless could be inherited by V2)
+
+%% 
+
+% remaining questions to address:
+   % -- are these channels of neurons? Or the neurons contain channels?
+   % -- what is the prevelance of direction neurons in high temporal
+   % channel? does this question even make sense?
+
+
+
+%% Population comparison: 50/50 vs 75/25, with and without tuned normalization
+clear; close all; clc; rng(0);
+
+mycolors = [
+0.498, 0.749, 0.4824;
+0.6863, 0.5529, 0.7647;
+0.498, 0.749, 0.4824;
+0.6863, 0.5529, 0.7647
+];
+
+% -------------------- Parameters --------------------
+N = 10000;                          % neurons per population
+sigma_tune = 25;                  % tuning width (deg) for neuronal responses
+sigma_norm = 30;                  % width of tuned normalization weights (deg)
+sigma_const = 0.5;                % semi-saturation constant
+stimSet = [0 45 90 135];          % tested orientations
+prefCats = [0 45 90 135];         % possible preferred orientations
+
+% Proportions across the four orientations (0,45,90,135)
+p_balanced = [0.25  0.25  0.25  0.25 ];    % 50/50 cardinal vs oblique
+p_biased   = [0.375 0.125 0.375 0.125];    % 75/25 cardinal vs oblique
+
+% -------------------- Helpers --------------------
+circDiff180 = @(a,b) abs(mod(a - b + 90, 180) - 90);     % minimal difference on 180° circle
+make_pop    = @(p) prefCats(randsample(numel(prefCats), N, true, p))'; % sample preferred orientations
+
+% Build populations
+pref_bal = make_pop(p_balanced);
+pref_bia = make_pop(p_biased);
+
+% Pairwise tuned normalization weights (depend on the population's PO layout)
+mkW = @(pref) exp(-( (abs(mod(pref - pref' + 90,180)-90)).^2 )/(2*sigma_norm^2));
+W_bal = mkW(pref_bal);
+W_bia = mkW(pref_bia);
+
+% -------------------- Compute mean responses --------------------
+mean_noNorm_bal = zeros(1,numel(stimSet));
+mean_noNorm_bia = zeros(1,numel(stimSet));
+mean_tuned_bal  = zeros(1,numel(stimSet));
+mean_tuned_bia  = zeros(1,numel(stimSet));
+
+for s = 1:numel(stimSet)
+    % --- Balanced population ---
+    d_bal = circDiff180(stimSet(s), pref_bal);
+    f_bal = exp(-(d_bal.^2)/(2*sigma_tune^2));           % raw (0..1)
+    mean_noNorm_bal(s) = mean(f_bal);
+    den_bal = sigma_const + W_bal * f_bal;               % tuned pool
+    R_bal   = f_bal ./ den_bal;                          % normalized
+    mean_tuned_bal(s) = mean(R_bal);
+
+    % --- Biased population ---
+    d_bia = circDiff180(stimSet(s), pref_bia);
+    f_bia = exp(-(d_bia.^2)/(2*sigma_tune^2));           % raw (0..1)
+    mean_noNorm_bia(s) = mean(f_bia);
+    den_bia = sigma_const + W_bia * f_bia;               % tuned pool
+    R_bia   = f_bia ./ den_bia;                          % normalized
+    mean_tuned_bia(s) = mean(R_bia);
+end
+
+% -------------------- Plots --------------------
+figure('Color','w','Position',[100 100 1050 420]);
+
+% (A) NO normalization: Balanced vs Biased (mean response)
+subplot(1,2,1);
+b1 = bar(stimSet, mean_noNorm_bal, 0.4, 'FaceColor','none', 'EdgeColor', 'flat', 'LineWidth', 3);
+b1.CData = mycolors; hold on;
+b2 = bar(stimSet+10, mean_noNorm_bia, 0.4, 'FaceColor','flat','EdgeColor', 'none');
+b2.CData = mycolors; hold on;
+xlabel('Stimulus orientation (deg)'); ylabel('Mean population response (no normalization)');
+title('No normalization: 50/50 vs 75/25');
+legend('Balanced 50/50','Biased 75/25','Location','best'); 
+xticks([0 45 90 135]); xticklabels({'0','45','90','135'});
+
+
+% (B) Tuned normalization: Balanced vs Biased (mean response)
+subplot(1,2,2);
+b1 = bar(stimSet, mean_tuned_bal, 0.4, 'FaceColor','none', 'EdgeColor', 'flat', 'LineWidth', 3);
+b1.CData = mycolors; hold on;
+b2 = bar(stimSet+10, mean_tuned_bia, 0.4, 'FaceColor','flat','EdgeColor', 'none');
+b2.CData = mycolors; hold on;
+
+xlabel('Stimulus orientation (deg)'); ylabel('Mean population response (tuned normalization)');
+title(sprintf('Tuned normalization')); % (\\sigma_{const} = %.2f, \\sigma_{norm} = %d^\\circ)', ...
+              %sigma_const, sigma_norm));
+legend('Balanced 50/50','Biased 75/25','Location','best'); 
+xticks([0 45 90 135]); xticklabels({'0','45','90','135'});
+
+
+% -------------------- Notes --------------------
+% Left panel: With no normalization, mean responses reflect the sampling bias:
+% more neurons preferring cardinals -> higher mean at 0° & 90°.
+% Right panel: With tuned normalization, the overrepresented orientations
+% create stronger normalization pools near their POs, selectively suppressing
+% responses to cardinal stimuli in the biased population (flattening the bias).
+
+
+%% Four-subplot figure: Example neurons (0°, 45°) + Stimulus-centered population responses
+x = -90:90;   % relative orientations for tuning curves
+
+% --- Example neurons ---
+resp0  = exp(-(x.^2)/(2*sigma_tune^2));   % neuron tuned to 0
+resp45 = exp(-(x.^2)/(2*sigma_tune^2));   % neuron tuned to 45
+
+groups = [0 45 90 135];
+
+% --- Population responses relative to 0° and 45° ---
+[relX0, agg0]   = pop_response_relative(0,  pref_bia, W_bia, sigma_tune, sigma_const, groups, circDiff180);
+[relX45, agg45] = pop_response_relative(45, pref_bia, W_bia, sigma_tune, sigma_const, groups, circDiff180);
+
+% --- Plot ---
+figure('Color','w','Position',[100 100 1100 800]);
+
+% 1) Neuron tuned to 0°
+subplot(1,2,1);
+plot(x, resp0, '-', 'LineWidth',2,'Color',[0.498, 0.749, 0.4824]);
+xlabel('Relative orientation (deg)'); ylabel('Response');
+hold on
+
+% 3) Neuron tuned to 45°
+subplot(1,2,1);
+% added 1 to x so we can see both curves
+plot(x+1, resp45, '-', 'LineWidth',2,'Color',[0.6863, 0.5529, 0.7647]);
+xlabel('Orientation relative to pref (deg)'); ylabel('Response');
+title('Neuron Response'); grid off; xlim([-100 100]);
+legend('neuron tuned to 0', 'neuron tuned to 45')
+
+% 2) Population response relative to stimulus 0°
+subplot(1,2,2);
+plot(relX0, agg0, '-o','LineWidth',2,'MarkerSize',6,'Color',[0.498, 0.749, 0.4824]);
+xlabel('Relative to stimulus (deg)'); ylabel('Aggregate normalized response');
+hold on
+
+% 4) Population response relative to stimulus 45°
+subplot(1,2,2);
+plot(relX45+1, agg45, '-o','LineWidth',2,'MarkerSize',6,'Color',[0.6863, 0.5529, 0.7647]);
+xlabel('Orientation relative to stimulus (deg)'); ylabel('Aggregate normalized response');
+legend('stimulus 0', 'stimulus 45')
+title('Population response for imbalanced population w/ tuned normalization'); grid off; xlim([-100 100]);
+%linkaxes([subplot(1,2,2), subplot(1,2,4)], 'y');
+
+% --- Helper: compute group-aggregated population response relative to a given stimulus
+function [relX_sorted, agg_sorted] = pop_response_relative(stimOri, pref_bia, W_bia, sigma_tune, sigma_const, groups, circDiff180)
+    d  = circDiff180(stimOri, pref_bia);
+    f  = exp(-(d.^2)/(2*sigma_tune^2));
+    den = sigma_const + W_bia * f;
+    R   = f ./ den;    % tuned-normalized responses
+    
+    agg = zeros(1,numel(groups));
+    for k = 1:numel(groups)
+        idx = (pref_bia == groups(k));
+        agg(k) = mean(R(idx));
+    end
+    
+    % stimulus-centered x-axis
+    relX = groups - stimOri;
+    relX = mod(relX + 90,180) - 90;  % wrap into [-90,90]
+    
+    % sort by x so lines connect properly
+    [relX_sorted, order] = sort(relX);
+    agg_sorted = agg(order);
+    
+    % duplicate -90 at +90
+    relX_sorted(end+1) = 90;
+    agg_sorted(end+1)  = agg_sorted(1);
+end

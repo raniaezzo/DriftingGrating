@@ -3,8 +3,8 @@ clc; clear all; close all
 % set up
 addpath(genpath(pwd));
 projectName = 'dg';
-%bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
-bidsDir =  '/Volumes/server/Projects/Project_dg/data_bids/';
+bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
+%bidsDir =  '/Volumes/server/Projects/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
 hRF_setting = 'glmsingle';
 fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
