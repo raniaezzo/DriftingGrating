@@ -2,7 +2,7 @@ function plotSepDirs(medianBOLDpa, asymmetryName, grouping, projectSettings, var
 
 
     % Check project name & request
-    if strcmp(projectSettings.projectName, 'da')
+    if strcmp(projectSettings.projectName, 'da') || strcmp(projectSettings.projectName, 'dots')
         if strcmp(asymmetryName, 'mainCardinalVsMainOblique')
             derivedVals = 0; % this is needed because radialVsTang occurs for both conditions
             % Ensure a third argument is provided
@@ -97,8 +97,8 @@ function plotSepDirs(medianBOLDpa, asymmetryName, grouping, projectSettings, var
     gap = [.04 .01]; % spacing between the subplots vertical gap - horizontal gap
     marg_h = [.015 .13]; % margins of bottom - top of the figure
     marg_w = [.01 .01]; % margina - left, right
-    [ha, pos] = tight_subplot(2, 1, gap, marg_h, marg_w);
-        
+    %[ha, pos] = tight_subplot(2, 1, gap, marg_h, marg_w);
+     [ha, pos] = tight_subplot(2, 5, gap, marg_h, marg_w);   
 
     % if motion, average the to colinear directions
     if strcmp(comparisonName, 'motion_minus_orientation') || strcmp(comparisonName, 'motion_minus_baseline')
@@ -204,6 +204,9 @@ function plotSepDirs(medianBOLDpa, asymmetryName, grouping, projectSettings, var
                 axes_limits.(projectName).(comparisonName).ROIs_early.max];
         end
     
+        if strcmp(projectName, 'dots')
+            ax.RLim = [0 0.5];
+        end
     
         ax = gca;
         ax.LineWidth = 3;  % Set the line width (adjust as needed)

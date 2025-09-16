@@ -125,6 +125,69 @@
         "plotSettings": {
                 "markerC": "k"
            }
+        },
+        "dots": {
+            "mainCardinalVsMainOblique": {
+                "description": "Comparing polar cardinal directions with polar oblique.",
+                "color_pro": [0.6510, 0.3804, 0.1020],
+                "color_con": [0.2510, 0.6902, 0.6510],
+                "plot_title": "Polar cardinal vs oblique"
+            },
+            "derivedCardinalVsDerivedOblique": {
+                "description": "Comparing responses to cartesian cardinal and oblique directions.",
+                "color_pro": [0.498, 0.749, 0.4824],
+                "color_con": [0.6863, 0.5529, 0.7647],
+                "plot_title": "Cartesian cardinal vs oblique"
+            },
+            "radialVsTangential": {
+                "description": "Contrasting radial and tangential motion patterns.",
+                "color_pro": [0.5725, 0.7725, 0.8706],
+                "color_con": [0.7922, 0, 0.1255],
+                "plot_title": "Radial vs tangential"
+            },
+            "eachAbsmotiondir": {
+                "description": "For upwards, downwards, leftwards, rightwards motion, etc..",
+                "color_rightwards": [0.0353, 0.9294, 0.9647],
+                "color_upperrightwards": [0.5529, 0.0549, 0.9647],
+                "color_upwards": [0.8549, 0.2314, 0.1490],
+                "color_upperleftwards": [0.2863, 0.9176, 0.0588],
+                "color_leftwards": [0.0353, 0.9294, 0.9647],
+                "color_lowerleftwards": [0.5529, 0.0549, 0.9647],
+                "color_downwards": [0.8549, 0.2314, 0.1490],
+                "color_lowerrightwards": [0.2863, 0.9176, 0.0588],
+                "plot_title": "Absolute motion directions"
+            },
+            "eachAbsorientation": {
+                "description": "For horizontal, vertical orientations, etc..",
+                "color_horizontal": [0.8549, 0.2314, 0.1490],
+                "color_upperright": [0.2863, 0.9176, 0.0588],
+                "color_vertical": [0.0353, 0.9294, 0.9647],
+                "color_upperleft": [0.5529, 0.0549, 0.9647],
+                "plot_title": "Absolute orientations"
+            },
+            "eachRelmotiondir": {
+                "description": "For inwards, outwards, cw, ccw motion, etc..",
+                "color_inwards": [1.0000, 0.7529, 0.0039],
+                "color_outwards": [1.0000, 0.7529, 0.0039],
+                "color_tangclock": [0.0471, 0.0471, 0.9647],
+                "color_tangcclock": [0.0471, 0.0471, 0.9647],
+                "color_outclock": [0.4588, 0.9882, 0.7020],
+                "color_outcclock": [0.9176, 0.2039, 0.7333],
+                "color_inclock": [0.9176, 0.2039, 0.7333],
+                "color_incclock": [0.4588, 0.9882, 0.7020],
+                "plot_title": "Absolute motion directions"
+            },
+            "eachRelorientation": {
+                "description": "For pinwheel, annulus, spiral.",
+                "color_tangential": [1.0000, 0.7529, 0.0039],
+                "color_radial": [0.0471, 0.0471, 0.9647],
+                "color_cclock": [0.4588, 0.9882, 0.7020],
+                "color_clock": [0.9176, 0.2039, 0.7333],
+                "plot_title": "Absolute orientations"
+            },
+        "plotSettings": {
+                "markerC": "k"
+           }
         }
 }
 }

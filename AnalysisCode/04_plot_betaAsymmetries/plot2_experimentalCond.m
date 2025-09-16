@@ -6,7 +6,7 @@ function plot2_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     % differential # of voxels representing the PAs
 
     % Check project name & request
-    if strcmp(projectSettings.projectName, 'da')
+    if strcmp(projectSettings.projectName, 'da') || strcmp(projectSettings.projectName, 'dots')
         if strcmp(asymmetryName, 'mainCardinalVsMainOblique')
             derivedVals = 0; % this is needed because radialVsTang occurs for both conditions
             % Ensure a third argument is provided

@@ -2,7 +2,7 @@ clc; clear all; close all;
 
 % set up
 addpath(genpath(pwd));
-projectName = 'dg';
+projectName = 'dots'; %'dg';
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
 %bidsDir = '/Volumes/server/Projects/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
@@ -15,7 +15,8 @@ setup_user('rania',bidsDir);
 masksFolder = fullfile(bidsDir, 'derivatives', 'masks');
 retinotopyMode = 'moving'; % of 'flicker' to use for analysis
 
-hRF_setting = 'glmsingle'; % can be: 'canonical', 'glmdenoise', 'glmsingle';
+% canonical only for dots condition
+hRF_setting = 'canonical'; %'glmsingle'; % can be: 'canonical', 'glmdenoise', 'glmsingle';
 
 hemis = {'lh'; 'rh'};
 
@@ -34,7 +35,7 @@ contrasts_dict = projectSettings.contrasts_dict;
 %contrastnames = {contrasts_dict.contrasts.(strcat(projectName, '_contrast_name'))};
 contrastnames = {contrasts_dict.contrasts.('dg_contrast_name')};
 
-colors = colors_data.conditions.(projectName);
+%colors = colors_data.conditions.(projectName);
 
 % % replaced below to pairwise (sep): 'cardmVcards', 'oblmVobls'
 % contrastnames = {'cardMsep', 'oblMsep', 'allmValls', ...
@@ -52,6 +53,9 @@ if strcmp(projectName, 'dg')
 elseif strcmp(projectName, 'da')
     subjects = {'sub-0037', 'sub-0201', 'sub-0255', 'sub-wlsubj123', 'sub-wlsubj124', ...
         'sub-0395', 'sub-0426', 'sub-0250'};
+elseif strcmp(projectName, 'dots')
+    subjects = {'sub-0037', 'sub-0201', 'sub-0255', 'sub-wlsubj123', 'sub-wlsubj124', ...
+        'sub-0426'};
 end
 
 indiv_contrastnames = {'m0_v_s90','m90_v_s0','m180_v_s90','m270_v_s0', ...
@@ -116,10 +120,11 @@ for si=1:numel(subjects)
         ret_moving.(sprintf('%s_vexp', hemi)) = MRIread(fullfile(movingRetDir, sprintf('%s.vexpl.mgz', hemi)));
         ret_moving.(sprintf('%s_sigma', hemi)) = MRIread(fullfile(movingRetDir, sprintf('%s.sigma.mgz', hemi)));
         
-        for cc=1:numel(indiv_contrastnames)
-            cond = indiv_contrastnames{cc};
-            mot_v_stat.(sprintf('%s_%s', hemi,cond)) = MRIread(fullfile(glmFilelist.folder, sprintf('%s.%s.mgz', hemi, cond)));
-        end
+        % RE commented out on Sep 15, 2025 b.c not doing anything
+%         for cc=1:numel(indiv_contrastnames)
+%             cond = indiv_contrastnames{cc};
+%             mot_v_stat.(sprintf('%s_%s', hemi,cond)) = MRIread(fullfile(glmFilelist.folder, sprintf('%s.%s.mgz', hemi, cond)));
+%         end
     end
     
 %     retFlickerData = [ret_flicker.lh_pa.vol, ret_flicker.rh_pa.vol ; ...
@@ -132,14 +137,14 @@ for si=1:numel(subjects)
         ret_moving.lh_vexp.vol, ret_moving.rh_vexp.vol; ...
         ret_moving.lh_sigma.vol, ret_moving.rh_sigma.vol];
 
-    indvCondData = [mot_v_stat.lh_m0_v_s90.vol', mot_v_stat.rh_m0_v_s90.vol' ; ...
-        mot_v_stat.lh_m90_v_s0.vol', mot_v_stat.rh_m90_v_s0.vol' ; ...
-        mot_v_stat.lh_m180_v_s90.vol', mot_v_stat.rh_m180_v_s90.vol'; ...
-        mot_v_stat.lh_m270_v_s0.vol', mot_v_stat.rh_m270_v_s0.vol'; ...
-        mot_v_stat.lh_m45_v_s135.vol', mot_v_stat.rh_m45_v_s135.vol'; ...
-        mot_v_stat.lh_m135_v_s45.vol', mot_v_stat.rh_m135_v_s45.vol'; ...
-        mot_v_stat.lh_m225_v_s135.vol', mot_v_stat.rh_m225_v_s135.vol'; ...
-        mot_v_stat.lh_m315_v_s45.vol', mot_v_stat.rh_m315_v_s45.vol'];
+%     indvCondData = [mot_v_stat.lh_m0_v_s90.vol', mot_v_stat.rh_m0_v_s90.vol' ; ...
+%         mot_v_stat.lh_m90_v_s0.vol', mot_v_stat.rh_m90_v_s0.vol' ; ...
+%         mot_v_stat.lh_m180_v_s90.vol', mot_v_stat.rh_m180_v_s90.vol'; ...
+%         mot_v_stat.lh_m270_v_s0.vol', mot_v_stat.rh_m270_v_s0.vol'; ...
+%         mot_v_stat.lh_m45_v_s135.vol', mot_v_stat.rh_m45_v_s135.vol'; ...
+%         mot_v_stat.lh_m135_v_s45.vol', mot_v_stat.rh_m135_v_s45.vol'; ...
+%         mot_v_stat.lh_m225_v_s135.vol', mot_v_stat.rh_m225_v_s135.vol'; ...
+%         mot_v_stat.lh_m315_v_s45.vol', mot_v_stat.rh_m315_v_s45.vol'];
 
 
     if strcmp(retinotopyMode, 'moving')
@@ -192,8 +197,11 @@ for si=1:numel(subjects)
             % make mask (mgz) and save 
             mask = zeros(size(currBold));
             mask(label_idx) = 1;
-            writeMGZfile(bidsDir, subjectname, '', mask, masksFolder, sprintf('%smask',roiname))
-    
+
+            if ~strcmp(projectName, 'dots') % just adding this b/c I am testing dots and dont want to overwrite old masks
+                writeMGZfile(bidsDir, subjectname, '', mask, masksFolder, sprintf('%smask',roiname))
+            end
+        
             % loop through pa bins:
             for pa=1:numel(polarAngles)
                 pangle = polarAngles(pa);

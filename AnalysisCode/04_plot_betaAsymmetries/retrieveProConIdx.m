@@ -2,7 +2,7 @@ function [proConditions, conConditions, allConditions] = retrieveProConIdx(proje
 
     % only used for conditions NOT derived (to index medianBOLDpa)
     if strcmp(comparisonName, 'motion_minus_orientation')
-        if radialvstang==1 && strcmp(projectName, 'da')
+        if radialvstang==1 && (strcmp(projectName, 'da') || (strcmp(projectName, 'dots')))
             proConditions = [9, 11]; 
             conConditions = [8, 10]; 
         else                        % same for dg, da
@@ -11,7 +11,7 @@ function [proConditions, conConditions, allConditions] = retrieveProConIdx(proje
         end
         allConditions = [proConditions, conConditions];
     elseif strcmp(comparisonName, 'motion_minus_baseline')
-        if radialvstang==1 && strcmp(projectName, 'da')
+        if radialvstang==1 && (strcmp(projectName, 'da') || (strcmp(projectName, 'dots')))
             proConditions = 20:21;
             conConditions = 18:19;
         else                        % same for dg, da
@@ -20,7 +20,7 @@ function [proConditions, conConditions, allConditions] = retrieveProConIdx(proje
         end
         allConditions = [proConditions, conConditions];
     elseif strcmp(comparisonName, 'orientation_minus_baseline')
-        if radialvstang==1 && strcmp(projectName, 'da')
+        if radialvstang==1 && (strcmp(projectName, 'da') || (strcmp(projectName, 'dots')))
             proConditions = 27;
             conConditions = 26;
         else                        % same for dg, da

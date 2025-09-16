@@ -8,8 +8,13 @@ function plot0_experimentalCond(condIdx1, condIdx2, medianBOLD, projectSettings)
     contrasts_dict = projectSettings.contrasts_dict;
     pairaxes_limits = projectSettings.pairaxes_limits;
 
-    contrastnames = {contrasts_dict.contrasts.(strcat(projectName, '_contrast_name'))};
-    
+    if strcmp(projectName, 'dots')
+        % if dots, just use da, it's the same strings
+        contrastnames = {contrasts_dict.contrasts.('dg_contrast_name')};
+    else
+        contrastnames = {contrasts_dict.contrasts.(strcat(projectName, '_contrast_name'))};
+    end
+
     % compute number of subjects
     nSubjects = size(medianBOLD,3);
 

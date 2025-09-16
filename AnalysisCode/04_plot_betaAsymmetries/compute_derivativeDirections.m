@@ -7,7 +7,7 @@
 function newMatrix = compute_derivativeDirections(medianBOLDpa, projectSettings, varargin)
 
     % Check project name
-    if strcmp(projectSettings.projectName, 'da')
+    if strcmp(projectSettings.projectName, 'da') || strcmp(projectSettings.projectName, 'dots')
         % Third argument is not required for "da"
         radialvstang = 0;
         asymmetryName = 'derivedCardinalVsDerivedOblique'; % cartesian cardinal
@@ -91,7 +91,7 @@ function newMatrix = compute_derivativeDirections(medianBOLDpa, projectSettings,
             
                     % check if this is correct - might need to move this out of
                     % the for loop
-                    if strcmp(projectName, 'da')
+                    if strcmp(projectName, 'da') || strcmp(projectName, 'dots')
                         UVM_dir = motionValue;
                         localMotionDirs = deriveLocalMotionfromUVM(UVM_dir, polarAngles);
                         currentlocalMotionDir = localMotionDirs(polarIndex);

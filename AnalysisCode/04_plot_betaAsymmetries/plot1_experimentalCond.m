@@ -8,7 +8,7 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     %                                   and radial v tangential
 
     % Check project name & request
-    if strcmp(projectSettings.projectName, 'da')
+    if strcmp(projectSettings.projectName, 'da') || strcmp(projectSettings.projectName, 'dots')
         if strcmp(asymmetryName, 'mainCardinalVsMainOblique')
             derivedVals = 0; % this is needed because radialVsTang occurs for both conditions
             % Ensure a third argument is provided
@@ -71,8 +71,8 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     gap = [.04 .01]; % spacing between the subplots vertical gap - horizontal gap
     marg_h = [.015 .13]; % margins of bottom - top of the figure
     marg_w = [.01 .01]; % margina - left, right
-    [ha, pos] = tight_subplot(2, 1, gap, marg_h, marg_w);
-%     [ha, pos] = tight_subplot(2, 5, gap, marg_h, marg_w);
+%    [ha, pos] = tight_subplot(2, 1, gap, marg_h, marg_w);
+     [ha, pos] = tight_subplot(2, 5, gap, marg_h, marg_w);
     % Hide the 8th subplot
 %         emptyPlots = 10 - numel(rois);
 %     for ep=1:emptyPlots
@@ -90,7 +90,7 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
         conditions2 = squeeze(conditions2);
         
         % Average across the conditions within subjects
-        if strcmp(projectName, 'da') && strcmp(comparisonName, 'orientation_minus_baseline') && radialvstang == 1 || ...
+        if (strcmp(projectName, 'da') || strcmp(projectName, 'dots')) && strcmp(comparisonName, 'orientation_minus_baseline') && radialvstang == 1 || ...
                 derivedVals == 1 %strcmp(asymmetryName, 'derivedCardinalVsDerivedOblique')
             avgConditions1 = conditions1;  % for orientation DA - there is only 1 value
             avgConditions2 = conditions2; 
@@ -207,7 +207,10 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
                 axes_limits.(projectName).(comparisonName).ROIs_early.max];
         end
     
-    
+        if strcmp(projectName, 'dots')
+            ax.RLim = [0 0.5];
+        end
+
         ax = gca;
         ax.LineWidth = 3;  % Set the line width (adjust as needed)
         ax.GridColor = [0.25 0.25 0.25];

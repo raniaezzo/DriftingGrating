@@ -1,7 +1,7 @@
 function newMatrix = compute_derivativeEachAbsDirection(medianBOLDpa, projectSettings)
 
     % Check project name
-    if strcmp(projectSettings.projectName, 'da')
+    if strcmp(projectSettings.projectName, 'da') || strcmp(projectSettings.projectName, 'dots')
         
         projectName = projectSettings.projectName;
         comparisonName = projectSettings.comparisonName;
