@@ -8,3 +8,5 @@ Data/**
 *.m~
 *.mat
 .DS_Store
+**/*.asv
+**/*.html
