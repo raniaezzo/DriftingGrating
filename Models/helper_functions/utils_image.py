@@ -829,12 +829,7 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg, representative_chIdx=0)
             # scalar suppressive drive s_val
             s_val = std_E
             
-            # ---------------------------------------------------------
-            # STEP 4 — output normalization,
-            # applied to all pixels and orientations
-            # ---------------------------------------------------------
             # E_ch: shape (n_ori, X, Y)
-
             R_full = E_ch ** p_exp / (s_val + sigma)   # shape (n_ori, X, Y)
 
             # Store output (add channel dimension back)
