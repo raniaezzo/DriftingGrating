@@ -691,6 +691,7 @@ def canonical_normalization(stim_energy, pixpdeg, representative_chIdx=0, p_exp 
 
             # this will be used to compute the overall suppressive drive accounting for all orientations
             pooled = np.sum(stim_energy[i,j][0,:] ** q_exp, axis=0)     # pool across orientations first
+            #np.shape(stim_energy)
             Z = gaussian_filter(pooled, sigma=std_pix)             # convolve pooled energy across all orientation channels
             
             for h in range(n_ori):          # orientation
@@ -730,49 +731,132 @@ def canonical_normalization(stim_energy, pixpdeg, representative_chIdx=0, p_exp 
     return norm_energy
 
 
-def normalization_byAnisotropy(stim_energy, pixpdeg, representative_chIdx=0):
 
+
+
+def div_normalization(stim_energy, pixpdeg, p_exp = 1, q_exp = 1, tuned=False):
+    
     # normalization strength (when sigma is large --> less normalization; approaching 0 is strong normalization)
     sigma = 0.1
-
+    
+    # p_exp: exponent on numerator often 1 or 2
+    # q_exp: The exponent q > 1 makes suppression superlinear, meaning strong signals get disproportionately more 
+                  # normalized than weak ones. This matches divisive gain control models in which suppressive drive grows faster 
+                  # than linear with local contrast. Excitation grows slower than suppression
+    
+    # std of spatial gaussian
+    std_deg = 3                  # make this 1 to 5
+    std_pix = std_deg * pixpdeg
+    
     [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy)
 
-    # here the input will either already be averaged into 1 dim [i,h][1,j] or we select the dimension w/representative_chIdx
-    if representative_chIdx > n_sf:
-        raise ValueError(f"Error: spatial frequency channels of input are {n_sf}. Likely already reduced in a previous step.")
-
-    energy = {
-        key: np.full((1, n_ori), np.nan)
-        for key in stim_energy.keys()
-    }
-
-    std_energy = {
-        key: np.full((1, 1), np.nan)
-        for key in stim_energy.keys()
-    }
-
+    # initialized output -- will be [i,h][1,j]
     norm_energy = {
-        key: np.full((1, n_ori), np.nan)
-        for key in stim_energy.keys()
+        key: np.full((n_sf,) + val.shape[1:], np.nan)
+        for key, val in stim_energy.items()
+    }
+
+    Z = {
+        key: np.full((n_sf,) + val.shape[1:], np.nan)
+        for key, val in stim_energy.items()
     }
     
     for i in range(n_set):              # e.g. Cartesian, Polar
         for j in range(n_stimuli):  # stimulus index
-            for h in range(n_ori):          # orientation
 
-                img = stim_energy[i, j][representative_chIdx, h]
-                energy[i,j][0,h] = np.sum(img) / img.size
+            if tuned==False:
 
-            # now compute the std 
-            vals = energy[i,j][0, :]          # shape (4,)
-            std_energy[i,j][0,0] = np.std(vals)
+                # ----------------------------------------
+                # UNTUNED NORMALIZATION
+                # ----------------------------------------
+                
+                # apply 4D gaussian filter across 4D matrix (all SFs, ORIs, X, Y)
+                Z[i,j] = gaussian_filter(
+                    stim_energy[i, j] ** q_exp,
+                    sigma=(std_pix, std_pix, std_pix, std_pix)
+                )
 
-            norm_energy[i,j][0,:] = vals / (sigma + std_energy[i,j][0,0])
+            elif tuned==True:
+
+                # ----------------------------------------
+                # ORIENTATION-TUNED NORMALIZATION
+                # ----------------------------------------
+            
+                for h in range(n_ori):          # orientation
+
+                    # 1) Orientation-tuned spatial surround for orientation h ((6, 1, 896, 896))
+                    S_h = gaussian_filter(
+                        stim_energy[i,j][:,h:h+1] ** q_exp, 
+                        sigma=(std_pix, 1, std_pix, std_pix)
+                    )
+
+                    # 2) Cross-orientation suppression for orientation h
+                    other_oris = [o for o in range(n_ori) if o != h]
+
+                    C_h = np.sum(
+                        [stim_energy[i,j][:, o:o+1] for o in other_oris],  # each (6, 1, 896, 896)
+                        axis=0
+                    ) 
+
+                    # 3) Total suppression
+                    Z[i,j][:,h:h+1] = S_h + C_h
+
+            norm_energy[i,j] = stim_energy[i, j] ** p_exp / (sigma + Z[i,j])
+            
+    return norm_energy
+
+
+
+
+
+
+def normalization_byAnisotropy(stim_energy, pixpdeg):
+
+    # normalization strength (when sigma is large --> less normalization; approaching 0 is strong normalization)
+    sigma = 0.1
+    
+    # take mean across SF channels
+    stim_energy_SFave = {
+        key: np.mean(val, axis=0, keepdims=True)
+        for key, val in stim_energy.items()
+    }
+
+    [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy_SFave)
+
+    energy = {
+        key: np.full((n_sf, n_ori), np.nan)
+        for key in stim_energy_SFave.keys()
+    }
+
+    std_energy = {
+        key: np.full((1, 1), np.nan)
+        for key in stim_energy_SFave.keys()
+    }
+
+    norm_energy = {
+        key: np.full((n_sf, n_ori), np.nan)
+        for key in stim_energy_SFave.keys()
+    }
+    
+    for i in range(n_set):              # e.g. Cartesian, Polar
+        for j in range(n_stimuli):      # stimulus index
+            for s in range(n_sf):      # sf
+                for h in range(n_ori):      # orientation
+
+                    img = stim_energy_SFave[i, j][s, h]
+                    energy[i,j][s,h] = np.sum(img) / img.size
+
+                # now compute the std 
+                vals = energy[i,j][s, :]          # shape (4,)
+                
+                std_energy[i,j][s,0] = np.std(vals)
+
+                norm_energy[i,j][s,:] = vals / (sigma + std_energy[i,j][s,0])
 
     return norm_energy
 
 
-def normalization_byAnisotropy_NOA(stim_energy, pixpdeg, representative_chIdx=0):
+def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
 
     # STD in denominator is NON-SPATIAL
 
@@ -791,32 +875,35 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg, representative_chIdx=0)
     #sigma_NOA_deg = 3                  # make this 1 to 5
     #sigma_NOA = sigma_NOA_deg * pixpdeg
 
-    
-    # Extract dictionary keys
-    keys = list(stim_energy.keys())
-    n_set     = max(k[0] for k in keys) + 1
-    n_stimuli = max(k[1] for k in keys) + 1
-
     # number of orientations
     sample_arr = next(iter(stim_energy.values()))
-    _, n_ori, X, Y = sample_arr.shape
+    _, _, X, Y = sample_arr.shape
 
+    # take mean across SF channels
+    stim_energy_SFave = {
+        key: np.mean(val, axis=0, keepdims=True)
+        for key, val in stim_energy.items()
+    }
+
+    [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy_SFave)
+    print(n_ori)
+    print(n_sf)
+    
     # Allocate output with SAME shape
     norm_energy = {
-        key: np.zeros((1, n_ori, X, Y))
-        for key in stim_energy.keys()
+        key: np.zeros((n_sf, n_ori, X, Y))
+        for key in stim_energy_SFave.keys()
     }
 
     # Loop over stimuli
     for i in range(n_set):
         for j in range(n_stimuli):
 
-            E_full = stim_energy[i, j]        # shape (1, n_ori, X, Y)
-            E_ch   = E_full[representative_chIdx]   # shape (n_ori, X, Y)
+            E_full = stim_energy_SFave[i, j]        # shape (1, n_ori, X, Y)
 
             # orientation energy vector: average over space
             # Compute Eori: shape (n_ori,)
-            Eori = np.mean(E_ch, axis=(1,2))
+            Eori = np.mean(E_full, axis=(2,3))
 
             # mean across orientations
             Ebar = np.mean(Eori)
@@ -830,16 +917,33 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg, representative_chIdx=0)
             s_val = std_E
             
             # E_ch: shape (n_ori, X, Y)
-            R_full = E_ch ** p_exp / (s_val + sigma)   # shape (n_ori, X, Y)
+            R_full = E_full ** p_exp / (s_val + sigma)   # shape (n_ori, X, Y)
 
             # Store output (add channel dimension back)
-            norm_energy[i,j][0,:,:,:] = R_full
+            norm_energy[i,j] = R_full
 
     return norm_energy
 
 
+def condense_energy(energy_dict, dim=0, operation="mean"):
+    """
+    energy_dict[n_set, n_stim] -> array (D0, D1, H, W)
+    Returns same structure, but reduced along `dim` with size=1.
+    """
 
+    out = {}
 
+    for key, arr in energy_dict.items():
+        if operation == "mean":
+            reduced = np.mean(arr, axis=dim, keepdims=True)
+        elif operation == "sum":
+            reduced = np.sum(arr, axis=dim, keepdims=True)
+        else:
+            raise ValueError("operation must be 'mean' or 'sum'")
+
+        out[key] = reduced
+
+    return out
 
 
 
