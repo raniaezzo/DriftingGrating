@@ -6,6 +6,7 @@
 
 import torch
 import cv2
+import copy
 from plenoptic.simulate import SteerablePyramidFreq
 import plenoptic as po
 import einops
@@ -14,6 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from itertools import product
 from scipy.ndimage import gaussian_filter
+
 
 def stimLookupTable():
 
@@ -555,10 +557,18 @@ def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpd
     if analysis_name == "Cartesian analysis": ############ WHICH ANALYSIS
         targetlist = stimorder_set0
         analysis_name = analyses[0] # do cartesian only for now
+        colorpro = [0.498, 0.749, 0.4824]
+        colorcon = [0.6863, 0.5529, 0.7647]
+        colorneut = [0.5, 0.5, 0.5]         
+        
     elif analysis_name == "Polar analysis":
         targetlist = stimorder_set1
         analysis_name = analyses[1] # do cartesian only for now
 
+        colorpro = [0.5725, 0.7725, 0.8706]
+        colorcon = [0.7922, 0, 0.1255]
+        colorneut = [0.5, 0.5, 0.5] 
+    
     for setname in set_labels:                ############ WHICH STIMULUS SET
         
         print(setname)
@@ -596,10 +606,18 @@ def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpd
             angles_closed  = np.append(angles_rad, angles_rad[0])
         
             # same color logic
-            if idx in [0, 2]:
-                color = [0.498, 0.749, 0.4824]
-            else:
-                color = [0.6863, 0.5529, 0.7647]
+            if analysis_name == "Cartesian analysis": 
+                if idx in [0, 2]:
+                    color = colorpro
+                else:
+                    color = colorcon
+            elif analysis_name == "Polar analysis": 
+                if idx in [0]:
+                    color = colorpro
+                elif idx in [2]:
+                    color = colorcon
+                else:
+                    color = colorneut
         
             ax_polar.plot(angles_closed, profile_closed, marker='o', linewidth=2,
                           label=target_label, color=color)
@@ -628,13 +646,21 @@ def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpd
             )
         
             avg_values.append(np.nanmean(profile))
+
+            if analysis_name == "Cartesian analysis": 
+                if idx in [0, 2]:
+                    bar_colors.append(colorpro)
+                else:
+                    bar_colors.append(colorcon)
+            elif analysis_name == "Polar analysis": 
+                if idx in [0]:
+                    bar_colors.append(colorpro)
+                elif idx in [2]:
+                    bar_colors.append(colorcon)
+                else:
+                    bar_colors.append(colorneut)
         
-            if idx in [0, 2]:
-                bar_colors.append([0.498, 0.749, 0.4824])
-            else:
-                bar_colors.append([0.6863, 0.5529, 0.7647])
-        
-        ax_bar.bar(stimorder_set0, avg_values, color=bar_colors)
+        ax_bar.bar(targetlist, avg_values, color=bar_colors)
         ax_bar.set_ylabel("Average magnitude")
         ax_bar.set_title("Mean across polar angles")
         
@@ -928,6 +954,10 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
 def normalization_byStimHomogeneity(stim_energy, pixpdeg):
 
     # Normalization based on homogeneity of center-surround stimulus match
+    # The measure of homogeneity is contrast-independent, 
+    
+    # Homogeneity is defined as the cosine similarity between locally pooled center and surround feature-energy vectors in the 24-D 
+    # SF×orientation space. This homogeneity value is then used to weight the exponent from 1-2 in the suppressive drive.
 
     """
     stim_energy[(i,j)] has shape (1, n_ori, X, Y)
@@ -981,29 +1011,41 @@ def normalization_byStimHomogeneity(stim_energy, pixpdeg):
 
             E_full = stim_energy[i, j]        # (6, 4, 896, 896)
 
-            # --- Center and surround via convolution ---
-            C = gaussian_filter(E_full, sigma=(0, 0, sigma_c, sigma_c))
-            S = gaussian_filter(E_full, sigma=(0, 0, sigma_s, sigma_s))
+            ######## CALCULATE HOMOGENEITY ACROSS SPACE) ##########
+            # --- Center and surround via convolution --- 
+            C = gaussian_filter(E_full, sigma=(0, 0, sigma_c, sigma_c)) # weighted average at center neighborhood at x,y
+            S = gaussian_filter(E_full, sigma=(0, 0, sigma_s, sigma_s)) # weighted average for larger pool (surround) at x,y
 
-            # --- Normalize to distributions ---
-            C_sum = np.sum(C, axis=(0, 1), keepdims=True) + 1e-9
-            S_sum = np.sum(S, axis=(0, 1), keepdims=True) + 1e-9
+            # To normalize distributions:
+            # --- Compute sum across SF and ORI dimensions ---
+            C_sum = np.sum(C, axis=(0, 1), keepdims=True) + 1e-9  # total center energy across ALL 24 channels (per x,y)
+            S_sum = np.sum(S, axis=(0, 1), keepdims=True) + 1e-9  # total center energy across ALL 24 channels (per x,y)
 
+            # --- Divide the weighted average (local / surround) by their respective sums 
+            # to enable the magnitude comparisons between local and surround (converts raw energies into channel distributions that sum to 1)
+            # This makes the homogeneity measure contrast-independent
             P_c = C / C_sum
             P_s = S / S_sum
 
-            # --- Flatten channel dimension: (24, H, W) ---
+            # --- Flatten channel dimension: (24, H, W) from (6, 4, H, W) ---
             Pc_flat = P_c.reshape(-1, *P_c.shape[2:])
             Ps_flat = P_s.reshape(-1, *P_s.shape[2:])
 
-            # --- Cosine similarity per pixel ---
-            dot = np.sum(Pc_flat * Ps_flat, axis=0)
+            ########### COSINE SIMILARITY PER PIXEL ############
+            # compute the dot product between the 24-D vectors at each pixel 
+            # ("match scores" for center vs. surround on a channel by channel basis)
+            dot = np.sum(Pc_flat * Ps_flat, axis=0)      # (H,W)
+
+            # compute overall strength of center / surround to normalize the dot
             norm_c = np.sqrt(np.sum(Pc_flat**2, axis=0))
             norm_s = np.sqrt(np.sum(Ps_flat**2, axis=0))
 
+            # this division makes homogeneity NOT depend on selectivity (uniform channels can still be homogenous)
+            # cos(angle) = (A · B) / (||A|| · ||B||)
             H_map = dot / (norm_c * norm_s + 1e-9)
-
-            # Store
+            #######################################################
+            
+            # Store (0 ---> very different channel distribution; 1 --> very similar channel distribution between center/surround)
             q_exp[i, j] = H_map + 1 # added plus one because this will be used for the q exponent, which should range from 1-2 not 0-1
 
             # apply 4D gaussian filter across 4D matrix (all SFs, ORIs, X, Y) -- exponent scaled based on surround similarity
@@ -1041,8 +1083,95 @@ def condense_energy(energy_dict, dim=0, operation="mean"):
     return out
 
 
+def orientation_mask(theta, ori_angles, h, w=22.5):
+    centers = ori_angles[h]
+    mask = np.zeros_like(theta, dtype=bool)
 
+    for ang in centers:
+        d = np.abs((theta - ang + 180) % 360 - 180)  # circular distance
+        mask |= (d <= w)
 
+    return mask
+
+def orientation_weight(theta, ori_angles, h):
+    """
+    theta: (H, W) array of angles in degrees, in [0, 360)
+    ori_angles: dict like {0: [0, 180], 1: [45, 225], ...}
+    h: orientation channel index
+
+    Returns: (H, W) weight array in [0, 1]
+             1 at preferred directions (e.g. 90, 270),
+             0 at orthogonal (±90° away, e.g. 0, 180).
+    """
+    centers = ori_angles[h]              # e.g. [90, 270] for vertical
+    # start with large distances
+    d_min = np.full_like(theta, np.inf, dtype=float)
+
+    for ang in centers:
+        # circular distance in degrees, in [0, 180]
+        d = np.abs((theta - ang + 180) % 360 - 180)
+        d_min = np.minimum(d_min, d)
+
+    # map distance 0 → 1, distance 90° → 0, clip beyond 90 to 0
+    w = 1.0 - np.clip(d_min / 90.0, 0.0, 1.0)
+
+    return w
+    
+
+def imposeImbalance(stim_energy, cardinal=1, radial=1):
+
+    w = 22.5
+
+    [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy)
+    sample_arr = next(iter(stim_energy.values()))
+    _, _, W, H = sample_arr.shape
+    
+    yc, xc = (H - 1) / 2, (W - 1) / 2
+
+    y, x = np.meshgrid(np.arange(H), np.arange(W), indexing='ij')
+    theta = (np.degrees(np.arctan2(y - yc, x - xc)) + 360) % 360
+
+    stim_energy_imb = copy.deepcopy(stim_energy)
+    
+    
+    for i in range(n_set):             # e.g. Cartesian, Polar
+        for j in range(n_stimuli):     # orientation
+
+            ###### CARDINAL OVERREPRESENTATION
+            ## do regardless of whether cartesian or polar b/c cardinal channels are always in cartesian categories (0 & 2)
+            # vertical channel
+            if cardinal!=1:
+                stim_energy_imb[i, j][:, 0] *= cardinal
+                # horizontal channel
+                stim_energy_imb[i, j][:, 2] *= cardinal
+
+            ##### RADIAL OVERREPRESENTATION
+            if radial!=1:
+                # for polar, need to define radial based on polar angle and channel
+                ori_angles = {
+                    0: [90, 270], # vertical channel (radial is 90/270)
+                    1: [135,315], # up-right channel (radial is 45/225)
+                    2: [0, 180],  # horizontal channel (radial is 0/180)
+                    3: [45, 225] # up-left channel (radial is 135/315)
+                }
+    
+                #ori_masks = {h: orientation_mask(theta, ori_angles, h, w) for h in range(4)}
+                ori_masks = {h: orientation_weight(theta, ori_angles, h) for h in range(4)}
+                
+                # for h in range(4):
+                #     stim_energy_imb[i, j][:, h][:, ori_masks[h]] *= radial
+    
+                for h in range(4):
+                    w_h = ori_masks[h]          # (896, 896), values in [0, 1]
+                    N = radial                     # desired max gain
+                
+                    # scale from 1 (no change) up to N at preferred directions
+                    gain = 1.0 + (N - 1.0) * w_h   # (896, 896), in [1, 2]
+                
+                    stim_energy_imb[i, j][:, h] *= gain  # broadcast over SF dimension
+                
+
+    return stim_energy_imb
 
 
     
