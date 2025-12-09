@@ -891,7 +891,7 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
     
     # Allocate output with SAME shape
     norm_energy = {
-        key: np.zeros((n_sf, n_ori, X, Y))
+        key: np.zeros((n_sf, n_ori, X, Y))  
         for key in stim_energy_SFave.keys()
     }
 
@@ -922,6 +922,101 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
             # Store output (add channel dimension back)
             norm_energy[i,j] = R_full
 
+    return norm_energy
+
+
+def normalization_byStimHomogeneity(stim_energy, pixpdeg):
+
+    # Normalization based on homogeneity of center-surround stimulus match
+
+    """
+    stim_energy[(i,j)] has shape (1, n_ori, X, Y)
+        (spatialFreqChannel, orientation, x, y)
+
+    Returns norm_energy with the *same shape*.
+    """
+
+    sigma = 0.1
+    p_exp = 1
+    sigma_center_deg = 3
+    sigma_surround_deg = 10
+    
+    # Convert degrees → pixels
+    sigma_c = sigma_center_deg * pixpdeg
+    sigma_s = sigma_surround_deg * pixpdeg
+    
+    # average across SF?
+    # stim_energy_SFave = {
+    #     key: np.mean(val, axis=0, keepdims=True)
+    #     for key, val in stim_energy.items()
+    # }
+
+    # for a given stimulus,
+    # go through each ori channel-- if the local and surround match ori give higher weight of suppression q (q 1-->2)
+    # sum contrast of this match
+
+    [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy)
+    # number of orientations
+    sample_arr = next(iter(stim_energy.values()))
+    _, _, X, Y = sample_arr.shape
+
+    # Prepare output dict with same keys (q_exp == homogeneity, from 1-2, 2 being identical center-surround distributions)
+    q_exp = {
+        key: np.full(stim_energy[key].shape[2:], np.nan)
+        for key in stim_energy.keys()
+    }
+
+    Z = {
+        key: np.full(stim_energy[key].shape[2:], np.nan)
+        for key in stim_energy.keys()
+    }
+
+    norm_energy = {
+        key: np.zeros((n_sf, n_ori, X, Y))   # key: np.zeros((n_sf, n_ori, X, Y))
+        for key in stim_energy.keys()
+    }
+
+    for i in range(n_set):
+        for j in range(n_stimuli):
+
+            E_full = stim_energy[i, j]        # (6, 4, 896, 896)
+
+            # --- Center and surround via convolution ---
+            C = gaussian_filter(E_full, sigma=(0, 0, sigma_c, sigma_c))
+            S = gaussian_filter(E_full, sigma=(0, 0, sigma_s, sigma_s))
+
+            # --- Normalize to distributions ---
+            C_sum = np.sum(C, axis=(0, 1), keepdims=True) + 1e-9
+            S_sum = np.sum(S, axis=(0, 1), keepdims=True) + 1e-9
+
+            P_c = C / C_sum
+            P_s = S / S_sum
+
+            # --- Flatten channel dimension: (24, H, W) ---
+            Pc_flat = P_c.reshape(-1, *P_c.shape[2:])
+            Ps_flat = P_s.reshape(-1, *P_s.shape[2:])
+
+            # --- Cosine similarity per pixel ---
+            dot = np.sum(Pc_flat * Ps_flat, axis=0)
+            norm_c = np.sqrt(np.sum(Pc_flat**2, axis=0))
+            norm_s = np.sqrt(np.sum(Ps_flat**2, axis=0))
+
+            H_map = dot / (norm_c * norm_s + 1e-9)
+
+            # Store
+            q_exp[i, j] = H_map + 1 # added plus one because this will be used for the q exponent, which should range from 1-2 not 0-1
+
+            # apply 4D gaussian filter across 4D matrix (all SFs, ORIs, X, Y) -- exponent scaled based on surround similarity
+            Z[i,j] = gaussian_filter(
+                stim_energy[i, j] ** q_exp[i,j],
+                sigma=(sigma_c, sigma_c, sigma_c, sigma_c)
+                )
+
+            norm_energy[i,j] = stim_energy[i, j] ** p_exp / (sigma + Z[i,j])
+
+    print(np.shape(stim_energy[i, j]))
+    print(np.shape(Z[i,j]))
+            
     return norm_energy
 
 
