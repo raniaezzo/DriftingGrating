@@ -624,7 +624,7 @@ def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpd
     
         ax_polar.legend(loc='upper right')
         ax_polar.set_ylim(yrange[0], yrange[1])
-        ax_polar.set_title("Local direction magnitude", pad=20)
+        ax_polar.set_title("Local direction energy", pad=20)
         ax_polar.set_theta_zero_location("E")
         ax_polar.set_theta_direction(1)
         
@@ -661,7 +661,7 @@ def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpd
                     bar_colors.append(colorneut)
         
         ax_bar.bar(targetlist, avg_values, color=bar_colors)
-        ax_bar.set_ylabel("Average magnitude")
+        ax_bar.set_ylabel("Average energy")
         ax_bar.set_title("Mean across polar angles")
         
         if yrange is not None:
@@ -763,7 +763,7 @@ def canonical_normalization(stim_energy, pixpdeg, representative_chIdx=0, p_exp 
 def div_normalization(stim_energy, pixpdeg, p_exp = 1, q_exp = 1, tuned=False):
     
     # normalization strength (when sigma is large --> less normalization; approaching 0 is strong normalization)
-    sigma = 0.1
+    sigma = 0.01
     
     # p_exp: exponent on numerator often 1 or 2
     # q_exp: The exponent q > 1 makes suppression superlinear, meaning strong signals get disproportionately more 
@@ -839,7 +839,7 @@ def div_normalization(stim_energy, pixpdeg, p_exp = 1, q_exp = 1, tuned=False):
 def normalization_byAnisotropy(stim_energy, pixpdeg):
 
     # normalization strength (when sigma is large --> less normalization; approaching 0 is strong normalization)
-    sigma = 0.1
+    sigma = 0.01
     
     # take mean across SF channels
     stim_energy_SFave = {
@@ -894,7 +894,7 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
     """
     
     p_exp = 1,
-    sigma = 0.1,
+    sigma = 0.01,
     #sigma_NOA=75
     
     # std of NOA
@@ -912,8 +912,6 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
     }
 
     [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy_SFave)
-    print(n_ori)
-    print(n_sf)
     
     # Allocate output with SAME shape
     norm_energy = {
@@ -966,7 +964,7 @@ def normalization_byStimHomogeneity(stim_energy, pixpdeg):
     Returns norm_energy with the *same shape*.
     """
 
-    sigma = 0.1
+    sigma = 0.01
     p_exp = 1
     sigma_center_deg = 3
     sigma_surround_deg = 10
@@ -1055,9 +1053,6 @@ def normalization_byStimHomogeneity(stim_energy, pixpdeg):
                 )
 
             norm_energy[i,j] = stim_energy[i, j] ** p_exp / (sigma + Z[i,j])
-
-    print(np.shape(stim_energy[i, j]))
-    print(np.shape(Z[i,j]))
             
     return norm_energy
 
