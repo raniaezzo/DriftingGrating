@@ -805,8 +805,10 @@ def div_normalization(stim_energy, pixpdeg, p_exp = 1, q_exp = 1, tuned=False):
             elif tuned==True:
 
                 # ----------------------------------------
-                # ORIENTATION-TUNED NORMALIZATION
+                # ORIENTATION-TUNED NORMALIZATION (As in Fang et al.)
                 # ----------------------------------------
+                # spatial surround only for orientation, + cross-orientation suppression term with no spatial blur
+                # interaction between feature tuning and space
             
                 for h in range(n_ori):          # orientation
 
@@ -819,12 +821,13 @@ def div_normalization(stim_energy, pixpdeg, p_exp = 1, q_exp = 1, tuned=False):
                     # 2) Cross-orientation suppression for orientation h
                     other_oris = [o for o in range(n_ori) if o != h]
 
+                    # no filter b/c no spatial spread at all (perfectly local)
                     C_h = np.sum(
                         [stim_energy[i,j][:, o:o+1] for o in other_oris],  # each (6, 1, 896, 896)
                         axis=0
                     ) 
 
-                    # 3) Total suppression
+                    # 3) Total suppression (equivalent to F(x',y',θ,θ') but decomposed)
                     Z[i,j][:,h:h+1] = S_h + C_h
 
             norm_energy[i,j] = stim_energy[i, j] ** p_exp / (sigma + Z[i,j])
