@@ -365,8 +365,45 @@ class InputStimuli:
         X_theta = X * np.cos(ori) - Y * np.sin(ori)
         # Generate sinusoidal wave
         grating = np.sin(2 * np.pi * sf * X_theta + self.phase)
+        print(f"Cartesian grating SF (cycPP): {sf}")
         
         return grating
+
+    def plot_polar_freq_in_logr_theta(self, sf, ori):
+        # compute w_r, w_a exactly as in your generator (but don’t round)
+        # same w_r, w_a as your stimulus (no rounding!)
+        w_a = sf * np.pi/2 * np.cos(ori) * self.img_size
+        w_r = sf * np.pi/2 * np.sin(ori) * self.img_size
+    
+        # radius in pixels
+        r = np.linspace(1, self.img_size//2, 500)  # avoid r=0
+
+
+        # Half radius in pixels (using inscribed circle)
+        r_half = (self.img_size / 2) / 2   # = img_size / 4
+    
+        # Pixel-based spatial frequencies
+        f_theta_pix_print = np.abs(w_a) / (2 * np.pi * r_half)   # tangential
+        f_r_pix_print     = np.abs(w_r) / (2 * np.pi * r_half)   # radial
+        
+        #print(f"Half radius (pixels): {r_half:.2f}")
+        print("Polar grating SF (cycPP):")
+        print(f"Tangential SF at half radius: {f_theta_pix_print:.6f} cycles/pixel")
+        print(f"Radial SF at half radius:     {f_r_pix_print:.6f} cycles/pixel")
+        
+        # # pixel-based spatial frequencies
+        # f_theta_pix = np.abs(w_a) / (2 * np.pi * r)   # tangential
+        # f_r_pix     = np.abs(w_r) / (2 * np.pi * r)   # radial
+    
+        # plt.figure(figsize=(6,5))
+        # plt.plot(r, f_theta_pix, label="Tangential SF (cycles/pixel)")
+        # plt.plot(r, f_r_pix, label="Radial SF (cycles/pixel)")
+        # plt.xlabel("Radius (pixels)")
+        # plt.ylabel("Spatial Frequency (cycles/pixel)")
+        # plt.title("Pixel-based Polar Spatial Frequencies")
+        # plt.legend()
+        # plt.grid(True)
+        # plt.show()
 
     def generate_polar_grating(self, sf, ori):
         x = np.linspace(-self.img_size//2, self.img_size//2, self.img_size)
@@ -384,6 +421,25 @@ class InputStimuli:
         w_a = np.round(w_a);
         grating = np.cos(w_r * np.log(r) + w_a * th);
 
+        self.plot_polar_freq_in_logr_theta(sf, ori)
+
+        # # just for record keeping (pixel conversion)
+        
+        # r_max = np.sqrt((len(Y)//2)**2 + (len(X)//2)**2)
+        # r_half = 0.5 * r_max
+        # piDistpix_half = np.pi * r_half #/ 2
+        # #print(piDistpix_half)
+        
+        # phase_ang = w_a * th    # same shape as th, e.g. (H, W)
+        # H, W = phase_ang.shape
+        # mid_row = phase_ang[H // 2, W // 2]
+        # print(w_a/piDistpix_half)
+
+        # rho_ang = w_r * np.log(r)    # same shape as th, e.g. (H, W)
+        # H, W = rho_ang.shape
+        # mid_col = rho_ang[H // 2, W // 2]
+        # #print(w_r)
+        
         return grating
 
     def makeMask(self, r_inner, r_outer, edgeSetting='soft'):
