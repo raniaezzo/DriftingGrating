@@ -21,14 +21,14 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
             % Ensure a third argument is provided
             if subset == 1
                 asymmetryName = 'radialVsTangential';
-                %radialvstang = 1;
+                radialvstang = 1;
             end
         elseif strcmp(asymmetryName, 'derivedCardinalVsDerivedOblique')
              % Third argument is ignored
              derivedVals = 1;
              if subset == 1
-                asymmetryName = 'verticalVsHorizontal';
-                %radialvstang = 0;
+                asymmetryName = 'verticalVshorizontal';
+                radialvstang = 0;
              end
         end
     elseif strcmp(projectSettings.projectName, 'dg')
@@ -36,14 +36,14 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
             % Third argument is ignored
             derivedVals = 0; 
             if subset == 1
-                asymmetryName = 'verticalVsHorizontal';
-                %radialvstang = 0;
+                asymmetryName = 'verticalVshorizontal';
+                radialvstang = 0;
             end
         elseif strcmp(asymmetryName, 'derivedCardinalVsDerivedOblique')
             derivedVals = 1;
             if subset == 1
                 asymmetryName = 'radialVsTangential';
-                %radialvstang = 1;
+                radialvstang = 1;
             end
         end
     else

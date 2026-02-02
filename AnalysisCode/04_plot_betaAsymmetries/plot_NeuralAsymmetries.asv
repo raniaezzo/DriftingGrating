@@ -4,16 +4,16 @@ clc; clear all; close all;
 
 % set up
 addpath(genpath(pwd));
-projectName = 'dots'; %'da';
+projectName = 'dg'; %'dots'; %'da';
 %bidsDir =  '/Volumes/server/Projects/Project_dg/data_bids/';
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';
 githubDir = '~/Documents/GitHub';
-hRF_setting = 'canonical' %'glmsingle';
+hRF_setting = 'glmsingle'; %'canonical' %'glmsingle';
 fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
 glmResultsfolder = fullfile(bidsDir, 'derivatives', strcat(projectName, 'GLM'), strcat('hRF_', hRF_setting));
 
 % can be 'motion_minus_orientation' ; 'motion_minus_baseline' ; 'orientation_minus_baseline'
-comparisonName = 'motion_minus_baseline'; %'motion_minus_orientation';
+comparisonName = 'orientation_minus_baseline'; %'motion_minus_orientation';
 
 projectSettings = loadConfig(githubDir);
 
@@ -108,60 +108,75 @@ plot0_experimentalCond(condIdx1, condIdx2, medianBOLD, projectSettings)
 
 %% MAIN CONDITION: Plot polor plots
 
-% this will plot the derived conditions for:
-if strcmp(projectName, 'da') || strcmp(projectName, 'dots') % experiment 2: da (polar cardinal vs oblique; and radial vs tangential)
-    isradial = [0, 1]; 
-elseif strcmp(projectName, 'dg') % experiment 1: dg (cartesian cardinal vs oblique)
-    isradial = 0; 
-end
+% % this will plot the main conditions for:
+% if strcmp(projectName, 'da') || strcmp(projectName, 'dots') % experiment 2: da (polar cardinal vs oblique; and radial vs tangential)
+%     isradial = [0, 1]; 
+% elseif strcmp(projectName, 'dg') % experiment 1: dg (cartesian cardinal vs oblique)
+%     isradial = 0; 
+% end
 
-for ci=1:numel(isradial)
+% just controls the loop to run 2x for either experiment (dg, da)
+is_mainsubset = [0, 1]; % if 0 do cardinal for dg or polar cardinal for da
+                        % if 1 do vertical for dg or radial for da
 
-    radialvstang = isradial(ci);
+counter = 0;
+
+for ci=1:numel(is_mainsubset) %isradial)
+    
+    %radialvstang = isradial(ci);
+    subset = is_mainsubset(ci);
     % this will plot the main conditions for experiment 1: dg (cardinal vs oblique) 
     % and for experiment 2: da (polar cardinal vs oblique; and radial vs
     % tangential)
     
     % this depends on retinotopy to isolate each direction with respect to its
     % location, but still only plots the main conditions
-    plot1_experimentalCond(medianBOLDpa, 'mainCardinalVsMainOblique', projectSettings, radialvstang)
+    plot1_experimentalCond(medianBOLDpa, 'mainCardinalVsMainOblique', projectSettings, subset) %radialvstang)
 
-    % plot each absolute directions
-    if strcmp(projectName, 'dg') && ~radialvstang
-        plotSepDirs(medianBOLDpa, 'mainCardinalVsMainOblique', 'Abs', projectSettings, radialvstang)
-    elseif (strcmp(projectName, 'da') || strcmp(projectName, 'dots')) && ~radialvstang
-        plotSepDirs(medianBOLDpa, 'mainCardinalVsMainOblique', 'Rel', projectSettings, radialvstang)
+    % plot each absolute directions (only needed 1x)
+    if strcmp(projectName, 'dg') && subset==0
+        plotSepDirs(medianBOLDpa, 'mainCardinalVsMainOblique', 'Abs', projectSettings, subset) %radialvstang)
+    elseif (strcmp(projectName, 'da') || strcmp(projectName, 'dots')) && subset==0
+        plotSepDirs(medianBOLDpa, 'mainCardinalVsMainOblique', 'Rel', projectSettings, subset) %radialvstang)
     end
 
     % MAIN CONDITION: Plot pairwise plots (EQUALLY WEIGHING POLAR ANGLE)
     % this section will average these values to equally weigh each of the 8
     % visual field locations
     
-    plot2_experimentalCond(medianBOLDpa, 'mainCardinalVsMainOblique', projectSettings, radialvstang)
-
+    plot2_experimentalCond(medianBOLDpa, 'mainCardinalVsMainOblique', projectSettings, subset) %radialvstang)
+    
+    counter = counter+1;
 end
+
+
 
 %% DERIVED CONDITION
 % (THESE DEPEND ON THE POLAR ANGLE WEDGE SIZE)
 
-% this will plot the derived conditions for:
-if strcmp(projectName, 'da') || strcmp(projectName, 'dots') % experiment 2: da (cartesian cardinal vs oblique)
-    n_derivedConditions = {{1:2, 3}};
-    isradial = 0; 
-elseif strcmp(projectName, 'dg') % experiment 1: dg (polar cardinal vs oblique; and radial vs tangential)
-    n_derivedConditions = {{1:2, 3}, {1, 2}};
-    isradial = [0, 1]; 
-end
+% % this will plot the derived conditions for:
+% if strcmp(projectName, 'da') || strcmp(projectName, 'dots') % experiment 2: da (cartesian cardinal vs oblique)
+%     n_derivedConditions = {{1:2, 3}};
+%     %isradial = 0; 
+% elseif strcmp(projectName, 'dg') % experiment 1: dg (polar cardinal vs oblique; and radial vs tangential)
+%     n_derivedConditions = {{1:2, 3}, {1, 2}};
+%     %isradial = [0, 1]; 
+% end
+
+% first pair are derived cardinals, second pair are derived subset
+% note that
+n_derivedConditions = {{1:2, 3}, {1, 2}};
+is_mainsubset = [0, 1];
 
 for ci=1:numel(n_derivedConditions)
 
-    radialvstang = isradial(ci);
+    subset = is_mainsubset(ci);
 
     % NOTE: this is an approximate definition, since they are derived by
     % estimates with/without curvature (closer to the locations 0-315 in 45
     % degree increments are more exact).
 
-    newMatrix = compute_derivativeDirections(medianBOLDpa, projectSettings, radialvstang);
+    newMatrix = compute_derivativeDirections(medianBOLDpa, projectSettings, subset);
 
     % Average the values in the first two rows along the first dimension
     % (contrast)
@@ -175,21 +190,21 @@ for ci=1:numel(n_derivedConditions)
     proconMatrix = cat(1, averagedMatrix, newMatrix(n_derivedConditions{ci}{2}, :, :, :));
 
     % Plot polar plots 
-    plot1_experimentalCond(proconMatrix, 'derivedCardinalVsDerivedOblique', projectSettings, radialvstang)
+    plot1_experimentalCond(proconMatrix, 'derivedCardinalVsDerivedOblique', projectSettings, subset)
     
     % plot each absolute directions
-    if (strcmp(projectName, 'da') || strcmp(projectName, 'dots')) && ~radialvstang
+    if (strcmp(projectName, 'da') || strcmp(projectName, 'dots')) && subset==0 %~radialvstang
         newMatrix = compute_derivativeEachAbsDirection(medianBOLDpa, projectSettings);
-        plotSepDirs(newMatrix, 'derivedCardinalVsDerivedOblique', 'Abs', projectSettings, radialvstang)
-    elseif strcmp(projectName, 'dg') && ~radialvstang
+        plotSepDirs(newMatrix, 'derivedCardinalVsDerivedOblique', 'Abs', projectSettings, subset)
+    elseif strcmp(projectName, 'dg') && subset==0 %~radialvstang
         newMatrix = compute_derivativeEachRelDirection(medianBOLDpa, projectSettings);
-        plotSepDirs(newMatrix, 'derivedCardinalVsDerivedOblique', 'Rel', projectSettings, radialvstang)
+        plotSepDirs(newMatrix, 'derivedCardinalVsDerivedOblique', 'Rel', projectSettings, subset)
     end
 
     % this section will average these values to equally weigh each of the 8
     % visual field locations
     
-    plot2_experimentalCond(proconMatrix, 'derivedCardinalVsDerivedOblique', projectSettings, radialvstang)
+    plot2_experimentalCond(proconMatrix, 'derivedCardinalVsDerivedOblique', projectSettings, subset)
 
 end
 

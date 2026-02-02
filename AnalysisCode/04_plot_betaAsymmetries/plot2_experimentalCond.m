@@ -5,39 +5,43 @@ function plot2_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     % keep in mind that this equally weighs each PA, whereas there could be
     % differential # of voxels representing the PAs
 
+    % for now, ensure a third argument is always provided
+    if nargin < 3 || isempty(varargin{1})
+        error('A third input is required when projectName is "%s" and asymmetryName is "%s".', projectSettings.projectName, asymmetryName);
+    else
+        subset = varargin{1};
+    end
+
     % Check project name & request
     if strcmp(projectSettings.projectName, 'da') || strcmp(projectSettings.projectName, 'dots')
         if strcmp(asymmetryName, 'mainCardinalVsMainOblique')
             derivedVals = 0; % this is needed because radialVsTang occurs for both conditions
             % Ensure a third argument is provided
-            if nargin < 3 || isempty(varargin{1})
-                error(sprintf('A third input is required when projectName is "%s" and asymmetryName is "%s".', projectSettings.projectName, asymmetryName));
-            else
-                radialvstang = varargin{1};
-                if radialvstang == 1
-                    asymmetryName = 'radialVsTangential';
-                end
+            if subset == 1
+                asymmetryName = 'radialVsTangential';
+                %radialvstang = 1;
             end
         elseif strcmp(asymmetryName, 'derivedCardinalVsDerivedOblique')
              % Third argument is ignored
              derivedVals = 1;
-             radialvstang = 0;
+             if subset == 1
+                asymmetryName = 'verticalVsHorizontal';
+                %radialvstang = 0;
+             end
         end
     elseif strcmp(projectSettings.projectName, 'dg')
         if strcmp(asymmetryName, 'mainCardinalVsMainOblique')
             % Third argument is ignored
             derivedVals = 0; 
-            radialvstang = 0;
+            if subset == 1
+                asymmetryName = 'verticalVsHorizontal';
+                %radialvstang = 0;
+            end
         elseif strcmp(asymmetryName, 'derivedCardinalVsDerivedOblique')
-            derivedVals = 1; 
-            % Ensure a third argument is provided
-            if nargin < 3 || isempty(varargin{1})
-                error(sprintf('A third input is required when projectName is "%s" and asymmetryName is "%s".', projectSettings.projectName, asymmetryName));
-            else
-                radialvstang = varargin{1};
-                if radialvstang == 1
-                    asymmetryName = 'radialVsTangential';
-                end
+            derivedVals = 1;
+            if subset == 1
+                asymmetryName = 'radialVsTangential';
+                %radialvstang = 1;
             end
         end
     else
@@ -60,7 +64,7 @@ function plot2_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     % retrieve the indices for specific asymmetries (e.g., motion -
     % orientation for main cardinal v main oblique)
     if ~derivedVals
-        [proConditions, conConditions, ~] = retrieveProConIdx(projectName, comparisonName, radialvstang);
+        [proConditions, conConditions, ~] = retrieveProConIdx(projectName, comparisonName, subset);
     else
         proConditions = 1; conConditions = 2;
     end
@@ -173,8 +177,10 @@ function plot2_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
                      pairaxes_PAew_limits.(projectName).(comparisonName).(ROI_category).max])
     
         if ii==1
-            if radialvstang
+            if strcmp(asymmetryName, 'radialVsTangential')
                 lg1 = legend('Radial', 'Tangential', 'Location', 'northeast');
+            elseif strcmp(asymmetryName, 'verticalVsHorizontal')
+                lg1 = legend('Vertical', 'Horizontal', 'Location', 'northeast');
             else
                 lg1 = legend('Card', 'Obl', 'Location', 'northeast');
             end

@@ -9,7 +9,7 @@
             "ROIs_motion": {"min": -2, "max": 3.5}
         },
         "orientation_minus_baseline": {
-            "ROIs_early": {"min": -1.5, "max": 3.5},
+            "ROIs_early": {"min": -2, "max": 3.5},
             "ROIs_motion": {"min": -1.5, "max": 2.5}
         }
     },
@@ -23,7 +23,7 @@
             "ROIs_motion": {"min": -2, "max": 3.5}
         },
         "orientation_minus_baseline": {
-            "ROIs_early": {"min": -1.5, "max": 3.5},
+            "ROIs_early": {"min": -2, "max": 3.5},
             "ROIs_motion": {"min": -1.5, "max": 2.5}
         }
     },
