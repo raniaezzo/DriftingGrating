@@ -992,8 +992,12 @@ def normalization_byStimHomogeneity(stim_energy, pixpdeg):
     sigma_surround_deg = 10
     
     # Convert degrees → pixels
-    sigma_c = sigma_center_deg * pixpdeg
-    sigma_s = sigma_surround_deg * pixpdeg
+    #sigma_c = sigma_center_deg * pixpdeg
+    #sigma_s = sigma_surround_deg * pixpdeg
+
+    sigma_c = 1 # make as small as possible (1 pixel)
+    sigma_s = 3 * pixpdeg
+    
     
     # average across SF?
     # stim_energy_SFave = {
@@ -1044,8 +1048,8 @@ def normalization_byStimHomogeneity(stim_energy, pixpdeg):
             # --- Divide the weighted average (local / surround) by their respective sums 
             # to enable the magnitude comparisons between local and surround (converts raw energies into channel distributions that sum to 1)
             # This makes the homogeneity measure contrast-independent
-            P_c = C / C_sum
-            P_s = S / S_sum
+            P_c = C #C / C_sum
+            P_s = S #S / S_sum
 
             # --- Flatten channel dimension: (24, H, W) from (6, 4, H, W) ---
             Pc_flat = P_c.reshape(-1, *P_c.shape[2:])
@@ -1054,6 +1058,7 @@ def normalization_byStimHomogeneity(stim_energy, pixpdeg):
             ########### COSINE SIMILARITY PER PIXEL ############
             # compute the dot product between the 24-D vectors at each pixel 
             # ("match scores" for center vs. surround on a channel by channel basis)
+            # if I am not controlling for contrast (P_c and P_s) then these are weighed by magnitude
             dot = np.sum(Pc_flat * Ps_flat, axis=0)      # (H,W)
 
             # compute overall strength of center / surround to normalize the dot
