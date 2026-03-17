@@ -916,7 +916,7 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
     """
     
     p_exp = 1,
-    sigma = 0.0001,
+    sigma = 0.01,
     #sigma_NOA=75
     
     # std of NOA
