@@ -11,7 +11,7 @@ fullfile(githubDir, 'DriftingGrating', 'AnalysisCode')
 glmResultsfolder = fullfile(bidsDir, 'derivatives', strcat(projectName, 'GLM'), strcat('hRF_', hRF_setting));
 
 % can be 'motion_minus_orientation' ; 'motion_minus_baseline' ; 'orientation_minus_baseline'
-comparisonName = 'orientation_minus_baseline';
+comparisonName = 'motion_minus_baseline';
 
 projectSettings = loadConfig(githubDir);
 
@@ -138,7 +138,8 @@ for roi=1:length(rois)  % just 1 ROI at a time (makes interprettability easier)
     % initialize value for each asymmetry
     mainCardinal = zeros(length(finalMat),1);
     derivedCardinal = zeros(length(finalMat),1);
-    polRadial = zeros(length(finalMat),1);
+    mainSubset = zeros(length(finalMat),1);
+    derivedSubset = zeros(length(finalMat),1);
 
     % this will select which directions are main cardinal (dg: up, down,
     % left, right = 1 vs NOT = -1 ; and da: in, out, cc, c = 1 vs NOT = -1)
@@ -154,40 +155,53 @@ for roi=1:length(rois)  % just 1 ROI at a time (makes interprettability easier)
     derivedCardinal(~derivedCardinal_idx) = -1;
 
     if strcmp(projectName, 'dg')
-        polRadial_idx = (abs(finalMat(:,2)-finalMat(:,3)) == 0 | abs(finalMat(:,2)-finalMat(:,3)) == 180);
-        polTangential_idx = abs(finalMat(:,2)-finalMat(:,3)) == 90 | abs(finalMat(:,2)-finalMat(:,3)) == 270;
+        derived_subset_pro_idx = (abs(finalMat(:,2)-finalMat(:,3)) == 0 | abs(finalMat(:,2)-finalMat(:,3)) == 180);
+        derived_subset_con_idx = abs(finalMat(:,2)-finalMat(:,3)) == 90 | abs(finalMat(:,2)-finalMat(:,3)) == 270;
+
+        % added
+        main_subset_pro_idx = ismember(finalMat(:,2), [90, 270]); % for dg, this is up/down
+        main_subset_con_idx = ismember(finalMat(:,2), [0, 180]); % for da, this is right/left
     elseif strcmp(projectName, 'da')
-        polRadial_idx = ismember(finalMat(:,2), [90, 270]); % for da, this is in/out
-        polTangential_idx = ismember(finalMat(:,2), [0, 180]); % for da, this is c/cc
+        main_subset_pro_idx = ismember(finalMat(:,2), [90, 270]); % for da, this is in/out
+        main_subset_con_idx = ismember(finalMat(:,2), [0, 180]); % for da, this is c/cc
+
+        % added
+        derived_subset_pro_idx = (abs(finalMat(:,2)-finalMat(:,3)) == 0 | abs(finalMat(:,2)-finalMat(:,3)) == 180); % vertical
+        derived_subset_con_idx = abs(finalMat(:,2)-finalMat(:,3)) == 90 | abs(finalMat(:,2)-finalMat(:,3)) == 270; % horizontal
     end
 
-    polRadial(polRadial_idx) = 1;
-    polRadial(polTangential_idx) = -1;
+    mainSubset(main_subset_pro_idx) = 1;
+    mainSubset(main_subset_con_idx) = -1;
 
-    finalMat = [finalMat, mainCardinal, derivedCardinal, polRadial];
+    derivedSubset(derived_subset_pro_idx) = 1;
+    derivedSubset(derived_subset_con_idx) = -1;
+
+    finalMat = [finalMat, mainCardinal, derivedCardinal, mainSubset, derivedSubset];
 
     %%
 
-    variable_names = {'bold', 'motiondir', 'polarangle', 'sub', 'mainCardinal', 'derivedCardinal', 'polRadial'};
+    variable_names = {'bold', 'motiondir', 'polarangle', 'sub', 'mainCardinal', 'derivedCardinal', 'mainSubset', 'derivedSubset'};
     modeldata = array2table(finalMat, 'VariableNames', variable_names);
 
     modeldata.subject = categorical(modeldata.sub);
 
-    lme = fitlme(modeldata, 'bold ~ mainCardinal + derivedCardinal + polRadial + (1|sub)');
+    lme = fitlme(modeldata, 'bold ~ mainCardinal + derivedCardinal + mainSubset + derivedSubset + (1|sub)');
 
     anova(lme, 'dfmethod', 'satterthwaite')
     
     global_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'Intercept'));
     maincard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'mainCardinal'));
     derivedcard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'derivedCardinal'));
-    radial_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'polRadial'));
+    mainsub_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'mainSubset'));
+    derivedsub_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'derivedSubset'));
 
     global_est = double(lme.Coefficients(global_idx,2));
     maincard_est = double(lme.Coefficients(maincard_idx,2));
     derivedcard_est = double(lme.Coefficients(derivedcard_idx,2));
-    radial_est = double(lme.Coefficients(radial_idx,2));
+    mainsub_est = double(lme.Coefficients(mainsub_idx,2));
+    derivedsub_est = double(lme.Coefficients(derivedsub_idx,2));
 
-    estimates = [global_est, maincard_est, derivedcard_est, radial_est];
+    estimates = [global_est, maincard_est, derivedcard_est, mainsub_est, derivedsub_est];
 
     save(fullfile(saveDir,strcat('LME_',metric)), 'estimates');
 
@@ -211,7 +225,7 @@ for roi=1:length(rois)
     saveDir = fullfile(glmResultsfolder,'LME_results', comparisonName, rois{roi});
     
     saveboot = {};
-    coeffs = nan(4,bootN);
+    coeffs = nan(5,bootN);
     load(strcat(saveDir, '/modeldata'), 'modeldata');
 
     for bi=1:bootN
@@ -229,24 +243,28 @@ for roi=1:length(rois)
             randomsample = [randomsample ; temp];
         end
 
-        lme = fitlme(randomsample,'bold ~ mainCardinal + derivedCardinal + polRadial + (1|sub)');
+        lme = fitlme(randomsample,'bold ~ mainCardinal + derivedCardinal + mainSubset + derivedSubset + (1|sub)');
 
         saveboot{bi} = lme;
 
         global_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'Intercept'));
         maincard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'mainCardinal'));
         derivedcard_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'derivedCardinal'));
-        radial_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'polRadial'));
-
+        mainsub_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'mainSubset'));
+        derivedsub_idx = find(contains(cellstr(lme.Coefficients(:,1)), 'derivedSubset'));
+    
         global_est = double(lme.Coefficients(global_idx,2));
         maincard_est = double(lme.Coefficients(maincard_idx,2));
         derivedcard_est = double(lme.Coefficients(derivedcard_idx,2));
-        radial_est = double(lme.Coefficients(radial_idx,2));
+        mainsub_est = double(lme.Coefficients(mainsub_idx,2));
+        derivedsub_est = double(lme.Coefficients(derivedsub_idx,2));
 
-        estimates = [global_est, maincard_est, derivedcard_est, radial_est];
+        estimates = [global_est, maincard_est, derivedcard_est, mainsub_est, derivedsub_est];
         coeffs(:,bi) = estimates;
         clear lme
         disp(bi)
+
+
 
     end
 
@@ -255,9 +273,24 @@ end
 
 
 
-%%
+%% plot
 
-asymmetryNames = {'mainCardinalVsMainOblique', 'derivedCardinalVsDerivedOblique', 'radialVsTangential'};
+% plot across rois per figure
+asymmetryNames = {'mainCardinalVsMainOblique', 'derivedCardinalVsDerivedOblique', 'mainSubset', 'derivedSubset'};
+
+% initialize arrays to store data for 1 ROI : for a later plot
+nA = numel(asymmetryNames);
+box_pro = cell(nA,1);
+box_con = cell(nA,1);
+mean_pro = nan(nA,1);
+mean_con = nan(nA,1);
+errlow_pro = nan(nA,1);
+errhigh_pro = nan(nA,1);
+errlow_con = nan(nA,1);
+errhigh_con = nan(nA,1);
+color_pro = nan(nA,3);
+color_con = nan(nA,3);
+asymLabel = strings(nA,1);
 
 %all_labels = {{'Main Cardinal', 'Main Oblique'}, {'Derived Cardinal', 'Derived Oblique'}, {'Radial', 'Tangential'}};
 
@@ -272,11 +305,32 @@ for ai=1:numel(asymmetryNames)
 
     asymmetryName = asymmetryNames{ai};
 
+    % specify the derived subset for dg and da (or later rename items in COLORS.json)
+    if strcmp(projectName, 'dg')
+        if strcmp(asymmetryName, 'mainSubset')
+            asymmetryName = 'verticalVsHorizontal';
+        elseif strcmp(asymmetryName, 'derivedSubset')
+            asymmetryName = 'radialVsTangential';
+        end
+    elseif strcmp(projectName, 'da')
+        if strcmp(asymmetryName, 'mainSubset')
+            asymmetryName = 'radialVsTangential';
+        elseif strcmp(asymmetryName, 'derivedSubset')
+            asymmetryName = 'verticalVsHorizontal';
+        end
+    end
+
+
     colors = colors_data.conditions.(projectName).(asymmetryName).color_pro';
     colors2 = colors_data.conditions.(projectName).(asymmetryName).color_con';
 
     %labelnames = all_labels(x);
     labelnames = lower(strsplit(asymmetryNames{ai}, 'Vs'));
+
+    % save for later plot
+    color_pro(ai,:) = colors;
+    color_con(ai,:) = colors2;
+    asymLabel(ai) = string(asymmetryName);
 
     figure
     xlim([0 8]);
@@ -295,22 +349,24 @@ for ai=1:numel(asymmetryNames)
         Gintercept = estimates(1);
         main_cardinal_est = Gintercept + estimates(2);
         derived_cardinal_est = Gintercept + estimates(3);
-        radial_est = Gintercept + estimates(4);
+        main_subset_est = Gintercept + estimates(4);
+        derived_subset_est = Gintercept + estimates(5);
     
         CIFcn = @(x,p)prctile(x, [100-p, p]); p = ci_level;
     
         % coefficient order is: intercept, abs_cardinality, rel_cardinality, radiality
         CI_maincardinality = CIFcn(coeffs(2,:)+Gintercept,p);
         CI_derivedcardinality = CIFcn(coeffs(3,:)+Gintercept,p);
-        CI_radiality = CIFcn(coeffs(4,:)+Gintercept,p);
+        CI_mainsubset = CIFcn(coeffs(4,:)+Gintercept,p);
+        CI_derivedsubset = CIFcn(coeffs(5,:)+Gintercept,p);
     
     
-        y = [estimates(2) estimates(3) estimates(4)]; %[0.11446, 0.033442, 0.015738];
+        y = [estimates(2) estimates(3) estimates(4) estimates(5)]; %[0.11446, 0.033442, 0.015738];
         %errlow = [0.0053434, 0.0053434, 0.0075567]; % output from model
         %errhigh = [0.0053434, 0.0053434, 0.0075567];
     
-        errlow = [CI_maincardinality(1) CI_derivedcardinality(1) CI_radiality(1)];
-        errhigh = [CI_maincardinality(2) CI_derivedcardinality(2) CI_radiality(2)];
+        errlow = [CI_maincardinality(1) CI_derivedcardinality(1) CI_mainsubset(1) CI_derivedsubset(1)];
+        errhigh = [CI_maincardinality(2) CI_derivedcardinality(2) CI_mainsubset(2) CI_derivedsubset(2)];
     
         y1 = Gintercept + y;
         y2 = Gintercept - y;
@@ -343,6 +399,23 @@ for ai=1:numel(asymmetryNames)
         %end
         
         hold on
+
+        if roi==1
+            % save for later
+            k = ai;  % 2..5
+        
+            box_pro{ai} = y1(:,x) - baselineSub;
+            box_con{ai} = y2(:,x) - baselineSub;
+        
+            mean_pro(ai) = y1(x) - baselineSub;
+            mean_con(ai) = y2(x) - baselineSub;
+        
+            errlow_pro(ai)  = errlow1(x);
+            errhigh_pro(ai) = errhigh1(x);
+        
+            errlow_con(ai)  = errlow2(x);
+            errhigh_con(ai) = errhigh2(x);
+        end
     
     end
     
@@ -383,9 +456,9 @@ for ai=1:numel(asymmetryNames)
     y_pos = ylim;
     %text(ylabelPosition(1), mean(y_pos), '\Delta BOLD signal (%)', 'FontSize', 20, 'Rotation', 90, 'HorizontalAlignment', 'center');
     
-    ylim([-0.5 0.5])
+    ylim([-0.75 0.75])
     ax1 = gca;
-    ax1.YTick = [-0.5, -0.25 0, .25, 0.5];
+    ax1.YTick = [-0.75, -0.5, -0.25 0, .25, 0.5, 0.75];
     text(ylabelPosition(1), mean(y_pos), '\Delta standardized BOLD response', 'FontSize', 20, 'Rotation', 90, 'HorizontalAlignment', 'center');
     
     xticks(1:length(rois))
@@ -407,6 +480,60 @@ for ai=1:numel(asymmetryNames)
 end
 
 
+%% Make master figure
 
+figure; hold on
 
+x = 1:nA;
+dx = 0.18;
 
+for ai = 1:nA
+    % Pro
+    boxchart((x(ai)-dx)*ones(size(box_pro{ai})), box_pro{ai}, ...
+        'BoxFaceColor', color_pro(ai,:), ...
+        'LineWidth', 4, 'BoxWidth', 0.6);
+    hold on
+
+    errorbar(x(ai)-dx, mean_pro(ai), ...
+        errlow_pro(ai), errhigh_pro(ai), ...
+        'LineStyle','none', 'LineWidth', 2, ...
+        'Color', color_pro(ai,:));
+
+    % Con
+    boxchart((x(ai)+dx)*ones(size(box_con{ai})), box_con{ai}, ...
+        'BoxFaceColor', color_con(ai,:), ...
+        'LineWidth', 4, 'BoxWidth', 0.6);
+    hold on
+
+    errorbar(x(ai)+dx, mean_con(ai), ...
+        errlow_con(ai), errhigh_con(ai), ...
+        'LineStyle','none', 'LineWidth', 2, ...
+        'Color', color_con(ai,:));
+end
+
+yline(0, '--', 'Color', [0 0 0], 'LineWidth', 2)
+
+ylim([-0.75 0.75])
+xlim([0.5 nA+0.5])
+
+set(gca,'XTick',[])
+box off
+set(gca,'linewidth',2, 'YColor',[0 0 0], 'XColor',[0 0 0]);
+set(gca,'FontName','Arial','FontSize',20);
+
+xticks(x)
+xticklabels(asymLabel)
+xtickangle(25)
+
+ylabel('\Delta standardized BOLD response', 'FontSize', 20);
+
+% Legend (dummy handles, same as you do)
+h1 = plot(nan, nan, 'Color', color_pro(1,:), 'LineWidth', 3);
+h2 = plot(nan, nan, 'Color', color_con(1,:), 'LineWidth', 3);
+legend([h1 h2], {'pro','con'}, 'Location', 'best');
+
+f = gcf;
+f.Position = [298 843 651 494];
+
+print(fullfile(figureDir, sprintf('MASTER_ROI1_%s_%s', comparisonName, projectName)), ...
+    '-dtiff', '-r300');

@@ -6,30 +6,30 @@
 
 function newMatrix = compute_derivativeDirections(medianBOLDpa, projectSettings, varargin)
 
-    % Check project name
-    if strcmp(projectSettings.projectName, 'da') || strcmp(projectSettings.projectName, 'dots')
-        % Third argument is not required for "da"
-        radialvstang = 0;
-        asymmetryName = 'derivedCardinalVsDerivedOblique'; % cartesian cardinal
-
-    elseif strcmp(projectSettings.projectName, 'dg')
-
-        % Ensure a third argument is provided for "da"
-        if nargin < 3 || isempty(varargin{1})
-            error('A third input is required when projectName is "dg".');
-        else
-            radialvstang = varargin{1};
-
-            if radialvstang == 0
-                asymmetryName = 'derivedCardinalVsDerivedOblique'; % polar cardinal
-            elseif radialvstang == 1
-                asymmetryName = 'radialVsTangential';
-            end
-
-        end
-    else
-        error('Unknown projectName. Expected "da" or "dg".');
-    end
+%     % Check project name
+%     if strcmp(projectSettings.projectName, 'da') || strcmp(projectSettings.projectName, 'dots')
+%         % Third argument is not required for "da"
+%         radialvstang = 0;
+%         asymmetryName = 'derivedCardinalVsDerivedOblique'; % cartesian cardinal
+% 
+%     elseif strcmp(projectSettings.projectName, 'dg')
+% 
+%         % Ensure a third argument is provided for "da"
+%         if nargin < 3 || isempty(varargin{1})
+%             error('A third input is required when projectName is "dg".');
+%         else
+%             radialvstang = varargin{1};
+% 
+%             if radialvstang == 0
+%                 asymmetryName = 'derivedCardinalVsDerivedOblique'; % polar cardinal
+%             elseif radialvstang == 1
+%                 asymmetryName = 'radialVsTangential';
+%             end
+% 
+%         end
+%     else
+%         error('Unknown projectName. Expected "da" or "dg".');
+%     end
 
     projectName = projectSettings.projectName;
     comparisonName = projectSettings.comparisonName;
