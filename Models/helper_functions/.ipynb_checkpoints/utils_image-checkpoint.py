@@ -505,6 +505,9 @@ def plot_energy_per_channel(stim_energy, representative_chIdx, pixpdeg, min_ecc_
 
 def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpdeg, min_ecc_deg=4, max_ecc_deg=8, yrange=None):
 
+    tsave = []
+    asave = []
+    
     polar_angles = [0, 45, 90, 135, 180, 225, 270, 315]
     n_pa = len(polar_angles)
     
@@ -659,10 +662,25 @@ def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpd
                     bar_colors.append(colorcon)
                 else:
                     bar_colors.append(colorneut)
+
         
-        ax_bar.bar(targetlist, avg_values, color=bar_colors)
+        print(targetlist)
+        tsave.append(targetlist)
+        print(avg_values)
+        asave.append(avg_values)
+        #ax_bar.bar(targetlist, avg_values, color=bar_colors)
+        
+        x = np.arange(len(targetlist))
+        ax_bar.scatter(x, avg_values, c=bar_colors, marker="_", s=400, linewidths=4)
+        ax_bar.set_xticks(x)
+        ax_bar.set_xticklabels(targetlist)
+        
         ax_bar.set_ylabel("Average energy")
         ax_bar.set_title("Mean across polar angles")
+
+        # dashed horizontal mean line
+        mean_val = np.mean(avg_values)
+        ax_bar.axhline(mean_val, linestyle='--', color='0.7')
         
         if yrange is not None:
             ax_bar.set_ylim(yrange[0], yrange[1])
@@ -670,8 +688,9 @@ def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpd
         
         plt.tight_layout()
         plt.show()
-
-
+        fig.savefig(f'{analysis_name}{setname}.pdf', dpi=300, bbox_inches='tight')
+    return tsave, asave
+        
 def canonical_normalization(stim_energy, pixpdeg, representative_chIdx=0, p_exp = 1, q_exp = 1, tuned=False):
 
     # note that inversion occurs with tuned=False, sigma=0.01 or 0.1, p_exp=1, q_exp=2, std_deg=3
@@ -897,7 +916,7 @@ def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
     """
     
     p_exp = 1,
-    sigma = 0.01,
+    sigma = 0.0001,
     #sigma_NOA=75
     
     # std of NOA

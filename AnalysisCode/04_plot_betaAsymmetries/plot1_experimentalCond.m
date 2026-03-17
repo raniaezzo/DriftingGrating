@@ -231,7 +231,8 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     gcf_edit = fitFig2Page(gcf);
     
     % Save as PDF
-    print(gcf_edit, filename, '-dpdf');
+    set(gcf_edit,'Renderer','painters'); % new
+    print(gcf_edit, filename, '-dpdf', '-painters');
     close all;
 
 end

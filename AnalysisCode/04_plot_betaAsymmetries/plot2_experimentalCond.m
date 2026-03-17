@@ -114,9 +114,17 @@ function plot2_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     %         ylim([-0.15 0.25])
         end
         
-        %errDiff = std(vals_1-vals_2)/(sqrt((size(medianBOLDpa, 4))));
-        %errorbar(1.5, mean(vals_1-vals_2), errDiff, 'k', 'LineWidth', 3);
-        %[h, p] = ttest(vals_1-vals_2, 0)
+        % if i need to plot asymmetry itself
+
+        
+        differences = vals_1-vals_2;
+        for subjectIndex = 1:size(medianBOLDpa, 4)
+            scatter(1.5, differences(subjectIndex), 30, 'MarkerFaceColor', [.85 .85 .85], 'MarkerEdgeColor', 'none');
+        end
+
+        errDiff = std(vals_1-vals_2)/(sqrt((size(medianBOLDpa, 4))));
+        errorbar(1.5, mean(vals_1-vals_2), errDiff, 'k', 'LineWidth', 3);
+        [h, p] = ttest(vals_1-vals_2, 0)
 
         fprintf('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         % Assume: vals_1 and vals_2 are column vectors [nSubjects x 1]
@@ -195,7 +203,8 @@ function plot2_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     gcf_edit = fitFig2Page(gcf);
     
     % Save as PDF
-    print(gcf_edit, filename, '-dpdf');
+    set(gcf_edit,'Renderer','painters'); % new
+    print(gcf_edit, filename, '-dpdf', '-painters');
     close all;
 
 end
