@@ -690,6 +690,184 @@ def plot_energy_per_stim(stim_energy, representative_chIdx, analysis_name, pixpd
         plt.show()
         fig.savefig(f'{analysis_name}{setname}.pdf', dpi=300, bbox_inches='tight')
     return tsave, asave
+
+
+def plot_energy_per_location_polar(stim_energy, representative_chIdx, analysis_name,
+                                   pixpdeg, min_ecc_deg=4, max_ecc_deg=8, yrange=None):
+
+    polar_angles = np.array([0, 45, 90, 135, 180, 225, 270, 315])
+    n_pa = len(polar_angles)
+
+    stimorder_set0 = ["ver", "diagR", "hor", "diagL"]
+    stimorder_set1 = ["pin", "spirR", "ann", "spirL"]
+
+    set_labels = ["Cartesian Set", "Polar Set"]
+    analyses = ["Cartesian analysis", "Polar analysis"]
+
+    metric = "mean"
+    [n_set, n_stimuli, n_ori, _] = retrieve_dim(stim_energy)
+
+    # Preallocate
+    mins  = np.zeros((n_set, n_stimuli, n_pa))
+    means = np.zeros((n_set, n_stimuli, n_pa))
+    maxs  = np.zeros((n_set, n_stimuli, n_pa))
+
+    # Compute summary stats over eccentricity band
+    for i in range(n_set):
+        for j in range(n_stimuli):
+            img = np.squeeze(np.sum(stim_energy[i, j], axis=1))
+
+            stats = get_stats_within_eccentricity_by_angle(
+                img, pixpdeg, min_ecc_deg=min_ecc_deg, max_ecc_deg=max_ecc_deg
+            )
+
+            mins[i, j, :]  = stats["min"]
+            means[i, j, :] = stats["mean"]
+            maxs[i, j, :]  = stats["max"]
+
+    if metric == "mean":
+        y_all = means
+    elif metric == "max":
+        y_all = maxs
+    elif metric == "min":
+        y_all = mins
+
+    if analysis_name == "Cartesian analysis":
+        targetlist = stimorder_set0
+        analysis_name = analyses[0]
+    elif analysis_name == "Polar analysis":
+        targetlist = stimorder_set1
+        analysis_name = analyses[1]
+    else:
+        raise ValueError("analysis_name must be 'Cartesian analysis' or 'Polar analysis'")
+
+    for setname in set_labels:
+
+        set_idx = set_labels.index(setname)
+        currData = np.squeeze(y_all[set_idx, :, :])
+
+        if setname == "Cartesian Set":
+            stimorder = stimorder_set0
+        elif setname == "Polar Set":
+            stimorder = stimorder_set1
+
+        # ---------------------------------------------------------
+        # Get one 8-point profile per orientation, as in your original function
+        # ---------------------------------------------------------
+        profile_dict = {}
+        for target_label in targetlist:
+            profile = get_angle_profile(
+                setname=setname,
+                analysis_type=analysis_name,
+                target_label=target_label,
+                stimorder=stimorder,
+                angles=polar_angles,
+                y_all=currData
+            )
+            profile_dict[target_label] = np.asarray(profile)
+
+        # ---------------------------------------------------------
+        # Build the figure and manually place 8 mini polar plots
+        # ---------------------------------------------------------
+        fig = plt.figure(figsize=(10, 10))
+
+        # positions of the 8 mini-plots around the center of the figure
+        theta_pos_deg = np.array([0, 45, 90, 135, 180, 225, 270, 315])
+        theta_pos_rad = np.deg2rad(theta_pos_deg)
+
+        ring_radius = 0.33     # distance of subplot centers from figure center
+        ax_size = 0.20         # width/height of each mini polar plot in figure coords
+        fig_center = np.array([0.5, 0.5])
+
+        # Angles INSIDE each mini polar plot:
+        # 0,45,90,135 and their duplicated opposite points
+        inner_angles_deg = np.array([0, 45, 90, 135, 180, 225, 270, 315])
+        inner_angles_rad = np.deg2rad(inner_angles_deg)
+
+        # Map your 4 orientations onto those angles
+        # Requested:
+        # horizontal -> 0 and 180
+        # upperleft  -> 45 and 225
+        # vertical   -> 90 and 270
+        # upperright -> 135 and 315
+        #
+        # Based on your Cartesian target order:
+        # "ver"   -> 90
+        # "diagR" -> 45
+        # "hor"   -> 0
+        # "diagL" -> 135
+        #
+        # If your diagonal naming is opposite, just swap diagR and diagL below.
+        ori_order = ["hor", "diagR", "ver", "diagL"]
+
+        # Global radial limits
+        if yrange is None:
+            all_vals = np.concatenate([profile_dict[k] for k in targetlist])
+            rmin = np.nanmin(all_vals)
+            rmax = np.nanmax(all_vals)
+            if np.isclose(rmin, rmax):
+                rmax = rmin + 1e-6
+        else:
+            rmin, rmax = yrange
+
+        for loc_idx, loc_angle_rad in enumerate(theta_pos_rad):
+            # figure coordinates for this mini-axis
+            cx = fig_center[0] + ring_radius * np.cos(loc_angle_rad)
+            cy = fig_center[1] + ring_radius * np.sin(loc_angle_rad)
+
+            ax = fig.add_axes(
+                [cx - ax_size / 2, cy - ax_size / 2, ax_size, ax_size],
+                polar=True
+            )
+
+            # values at THIS location, one value per orientation
+            # then duplicate across 180 deg
+            v_hor   = profile_dict["hor"][loc_idx]
+            v_diagR = profile_dict["diagR"][loc_idx]
+            v_ver   = profile_dict["ver"][loc_idx]
+            v_diagL = profile_dict["diagL"][loc_idx]
+
+            rvals = np.array([
+                v_hor,    # 0
+                v_diagR,  # 45
+                v_ver,    # 90
+                v_diagL,  # 135
+                v_hor,    # 180
+                v_diagR,  # 225
+                v_ver,    # 270
+                v_diagL   # 315
+            ])
+
+            # close the loop
+            rvals_closed = np.append(rvals, rvals[0])
+            inner_angles_closed = np.append(inner_angles_rad, inner_angles_rad[0])
+
+            ax.plot(inner_angles_closed, rvals_closed, '-o',
+                    color='red', linewidth=2, markersize=4)
+            ax.set_theta_zero_location("E")
+            ax.set_theta_direction(1)
+            ax.set_ylim(rmin, rmax)
+
+            # cleaner look
+            ax.set_xticks(np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]))
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])
+            ax.grid(True, alpha=0.4)
+
+            # label the location represented by this subplot
+            ax.set_title(f"{polar_angles[loc_idx]}°", pad=8, fontsize=10)
+
+        # center text
+        fig.text(0.5, 0.5,
+                 f"{analysis_name}\n{setname}\nlocal direction energy",
+                 ha='center', va='center', fontsize=12)
+
+        plt.show()
+        fig.savefig(f"{analysis_name}_{setname}_8locations_polar.pdf",
+                    dpi=300, bbox_inches='tight')
+
+
+    
         
 def canonical_normalization(stim_energy, pixpdeg, representative_chIdx=0, p_exp = 1, q_exp = 1, tuned=False):
 
@@ -792,6 +970,7 @@ def div_normalization(stim_energy, pixpdeg, p_exp = 1, q_exp = 1, tuned=False):
     # std of spatial gaussian
     std_deg = 3                  # make this 1 to 5
     std_pix = std_deg * pixpdeg
+    print(std_pix)
     
     [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy)
 
