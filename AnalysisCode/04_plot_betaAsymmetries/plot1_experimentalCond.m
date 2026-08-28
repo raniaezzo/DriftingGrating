@@ -58,6 +58,12 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
         error('Unknown projectName. Expected "da" or "dg".');
     end
 
+    % Which of fitAsymmetryRegression.m's 4 cached terms (termNames =
+    % {mainCardinal, derivedCardinal, mainSubset, derivedSubset}) this call
+    % corresponds to -- same formula as plot2_experimentalCond.m, needed
+    % below for the model-based harmonic overlay curve.
+    termIdx = 1 + 2*subset + derivedVals;
+
     projectName = projectSettings.projectName;
     colors_data = projectSettings.colors_data;
     rois = projectSettings.rois;
@@ -65,27 +71,26 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     axes_limits = projectSettings.axes_limits;
     figureDir = projectSettings.figureDir;
 
+    % Locate fitAsymmetryRegression.m's cached output -- same convention as
+    % plot2_experimentalCond.m -- needed for the model-based harmonic
+    % overlay curve below (termIdx==1, cardinal-vs-oblique, for now).
+    [summaryTablesDir,~,~] = fileparts(projectSettings.gainSummaryFile);
+    [derivativesDir,~,~] = fileparts(summaryTablesDir);
+    [bidsDir,~,~] = fileparts(derivativesDir);
 
     styleInfo = colors_data.conditions.(projectName).(asymmetryName);
     colors = {styleInfo.color_pro', styleInfo.color_con'};
 
-    % pro = filled marker, solid line; con = unfilled marker, solid line
-    % at 50% opacity -- see COLORS.json's pro_filled/con_filled/
-    % pro_lineWidth/con_lineWidth/errorbar_lineWidth fields for this
-    % asymmetry (color_pro == color_con by design: pro/con are now
-    % distinguished by fill state and line weight, not by hue).
-    %
-    % con's "50% opacity" is implemented as a flat 50%-white-blended
-    % color, not true alpha: these figures are saved with the painters
-    % renderer for true vector PDF output, and painters does not support
-    % line transparency (only the OpenGL renderer does, which would force
-    % a rasterized rather than vector PDF). Blending toward white gives
-    % the same visual result as 50% alpha over this figure's white
-    % background, while keeping the export fully vector.
+    % pro = filled marker, solid line; con = unfilled marker, solid line,
+    % same full color as pro (no opacity/blend manipulation) -- see
+    % COLORS.json's pro_filled/con_filled/pro_lineWidth/con_lineWidth/
+    % errorbar_lineWidth fields for this asymmetry (color_pro == color_con
+    % by design: pro/con are distinguished by fill state and line weight,
+    % not by hue).
     proFaceColor = colors{1};
     conFaceColor = [1 1 1]; % white fill (not unfilled)
     proEdgeColor = colors{1};
-    conEdgeColor = 0.5*colors{2} + 0.5*[1 1 1]; % 50%-white-blended = visual equivalent of 50% alpha on white, applied to both con's marker edge and connecting line
+    conEdgeColor = colors{2};
     proLineStyle = '-';
     conLineStyle = '-';
     proLineWidth = styleInfo.pro_lineWidth;
@@ -329,47 +334,187 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
                 CI_95_lower(loc), CI_95_upper(loc), CI_68_lower(loc), CI_68_upper(loc), mean_diff}; %#ok<SAGROW>
         end
 
-        % Draw order (bottom to top): connecting lines, then markers, then
-        % error bars on top. Lines and markers are deliberately drawn in
-        % SEPARATE calls (lines with no marker; markers with no line) --
-        % the previous combined 'o'+line calls drew a marker at both the
-        % "closing segment" endpoints AND again at those same points in
-        % the "all data" call, double-stroking the outline at those 2 of
-        % 8 locations only (fill looked fine since a flat opaque fill
-        % drawn twice looks identical to once, but the outline stroke
-        % rendered visibly heavier there than at the other 6 points).
-        % Drawing each marker exactly once fixes that.
+        % Draw order (bottom to top): model curves, then markers, then
+        % error bars on top -- the model curves are the group-level
+        % prediction, not the data itself, so they read best as a
+        % background trend with the actual data (dots + error bars) drawn
+        % on top of them, not obscuring them. Lines and markers are
+        % deliberately drawn in SEPARATE calls (lines with no marker;
+        % markers with no line) -- the previous combined 'o'+line calls
+        % drew a marker at both the "closing segment" endpoints AND again
+        % at those same points in the "all data" call, double-stroking the
+        % outline at those 2 of 8 locations only (fill looked fine since a
+        % flat opaque fill drawn twice looks identical to once, but the
+        % outline stroke rendered visibly heavier there than at the other
+        % 6 points). Drawing each marker exactly once fixes that.
 
-        % connecting lines only (no markers)
-        polarplot([deg2rad(anglevals(end)), deg2rad(anglevals(1))],[vals_1(end), vals_1(1)], 'LineStyle', proLineStyle, 'Color', proEdgeColor, 'LineWidth',proLineWidth)
-        hold on
-        polarplot([deg2rad(anglevals(end)), deg2rad(anglevals(1))],[vals_2(end), vals_2(1)], 'LineStyle', conLineStyle, 'Color', conEdgeColor, 'LineWidth',conLineWidth)
-        hold on
-        polarplot(deg2rad(anglevals),vals_1, 'LineStyle', proLineStyle, 'Color', proEdgeColor, 'LineWidth',proLineWidth)
-        hold on
-        polarplot(deg2rad(anglevals),vals_2, 'LineStyle', conLineStyle, 'Color', conEdgeColor, 'LineWidth',conLineWidth)
-        hold on
+        % Straight-line-segment connectors between the 8 dots used to be
+        % drawn here (both the closing segment and the main 8-point
+        % polyline, for pro and con) -- removed now that the model-based
+        % continuous harmonic curve below (termIdx==1 so far) replaces
+        % them with the regression's own predicted shape instead of a
+        % naive straight-line interpolation between data points.
 
-        % markers only, exactly once per location (no line). Both use
-        % proLineWidth for the marker edge (not conLineWidth, which
-        % COLORS.json sets to half of pro's) so the con/unfilled dot's
-        % outline reads at the same thickness as pro's, matching the same
-        % fix applied to the pairwise plots' dots in
-        % plot2_experimentalCond.m -- dot SIZE was already matched
-        % (markerSize here is the same 6*0.8 value plot2_experimentalCond.m
-        % converts to its scatter()-equivalent area, per that file's
-        % comment), only the con outline width was thinner.
-        polarplot(deg2rad(anglevals),vals_1, 'o', 'LineStyle', 'none', 'MarkerSize', markerSize, 'MarkerFaceColor', proFaceColor, 'MarkerEdgeColor', proEdgeColor, 'LineWidth',proLineWidth)
-        hold on
-        polarplot(deg2rad(anglevals),vals_2, 'o', 'LineStyle', 'none', 'MarkerSize', markerSize, 'MarkerFaceColor', conFaceColor, 'MarkerEdgeColor', conEdgeColor, 'LineWidth',proLineWidth)
-        hold on
+        % Model-based continuous overlay (replaces the old, now-superseded
+        % plotModelToo dots -- see that block below, still present but
+        % dead code with plotModelToo=0): the regression's own predicted
+        % value as a SMOOTH function of location, not just the 8 discrete
+        % dots connected by straight segments. Wired up for all 4 terms
+        % (termIdx 1-4).
+        %
+        % termIdx==1 (cardinal-oblique): averaging the full model over
+        % cardinal's 2 constituent directions (0/90 deg) exactly cancels
+        % mainSubset/derivedSubset at every location, leaving
+        %   f_pro(theta) = grandIntercept + beta(mainCardinal) + beta(derivedCardinal)*cos(4*theta)
+        %   f_con(theta) = grandIntercept - beta(mainCardinal) - beta(derivedCardinal)*cos(4*theta)
+        % cos(4*theta) is the exact continuous form of derivedCardinal's
+        % +-1 coding at a cardinal reference direction (0 deg or 90 deg
+        % give the IDENTICAL curve -- both are in maincardinalmDir, so
+        % derivedCardinal's own formula collapses to the same thing either
+        % way; same for oblique's 45/135 reference) -- verified to
+        % reproduce +1/-1 at all 8 discrete wedge centers, matching
+        % fitAsymmetryRegression.m's own predictor definition exactly.
+        %
+        % termIdx==2 (polar cardinal-oblique): the SAME 2nd-order harmonic
+        % as cardinal-oblique (period 90 deg), just with the roles of the
+        % two betas swapped -- it peaks/troughs at the opposite locations.
+        % In termIdx==1's curve, beta(derivedCardinal) is already the
+        % additive cos(4*theta)-varying term riding on top of
+        % beta(mainCardinal)'s constant offset; polar-cardinal-oblique is
+        % the mirror image of that same pair: beta(derivedCardinal)
+        % becomes the constant term and beta(mainCardinal) becomes the
+        % cos(4*theta)-varying one:
+        %   f_pro(theta) = grandIntercept + beta(derivedCardinal) + beta(mainCardinal)*cos(4*theta)
+        %   f_con(theta) = grandIntercept - beta(derivedCardinal) - beta(mainCardinal)*cos(4*theta)
+        % Derived by averaging the full 4-beta model over the two real
+        % directions theta_stim = theta_V and theta_stim = theta_V+90 (the
+        % two directions that ARE "matching"/radial+tangential at location
+        % theta_V, per compute_derivativeDirections.m's own definition of
+        % polar cardinal) -- this cancels mainSubset/derivedSubset exactly,
+        % the same cancellation mechanism as termIdx==1, just anchored to
+        % theta_V instead of a fixed 0/90 reference. A previous version of
+        % this formula used a piecewise sign(cos(4*theta))/abs(cos(4*theta))
+        % construction that matched the 8 discrete points but introduced a
+        % real discontinuity at the octant boundaries -- wrong, since this
+        % is genuinely just another smooth 2nd-order harmonic, not a
+        % step function. Verified to exactly reproduce the discrete pro/con
+        % values AND vary smoothly (no jump) between them.
+        %
+        % termIdx==3 (horizontal-vertical, mainSubset) and termIdx==4
+        % (radial-tangential, derivedSubset) are structurally different
+        % from 1/2: pro/con here are each a SINGLE real direction (not an
+        % averaged category), so there is no cancellation of the other 2
+        % betas -- both curves genuinely contain all 4 betas, and pro/con
+        % share (rather than mirror) the mainCardinal/derivedCardinal
+        % contribution:
+        %   termIdx==3: pro=horizontal (theta_stim=0 fixed), con=vertical (theta_stim=90 fixed)
+        %     f_pro(theta) = grandIntercept + beta(mainCardinal) + beta(mainSubset) + beta(derivedCardinal)*cos(4*theta) + beta(derivedSubset)*cos(2*theta)
+        %     f_con(theta) = grandIntercept + beta(mainCardinal) - beta(mainSubset) + beta(derivedCardinal)*cos(4*theta) - beta(derivedSubset)*cos(2*theta)
+        %   termIdx==4: pro=radial (theta_stim=theta_V, i.e. motion direction
+        %     pointing along the location itself), con=tangential (theta_stim=theta_V+90)
+        %     f_pro(theta) = grandIntercept + beta(derivedCardinal) + beta(derivedSubset) + beta(mainCardinal)*cos(4*theta) + beta(mainSubset)*cos(2*theta)
+        %     f_con(theta) = grandIntercept + beta(derivedCardinal) - beta(derivedSubset) + beta(mainCardinal)*cos(4*theta) - beta(mainSubset)*cos(2*theta)
+        % Both derived the same way (evaluate the full 4-beta continuous
+        % harmonic model at the fixed or location-tracking theta_stim that
+        % defines pro/con for this term) and verified to exactly reproduce
+        % the real discrete predictor values at all 8 wedge centers.
+        if termIdx >= 1 && termIdx <= 4
+            if isfield(projectSettings, 'fitLabel') && ~isempty(projectSettings.fitLabel)
+                fitLabelModel = projectSettings.fitLabel;
+            else
+                fitLabelModel = projectName;
+            end
+            fitFileModel = fullfile(bidsDir,'derivatives','summaryTables','regressionResults',fitLabelModel,sprintf('%s.mat',rois{ri}));
+            if ~isfile(fitFileModel)
+                error('plot1_experimentalCond:missingFit', ...
+                    'Cached fit not found for %s / %s at %s -- run fitAsymmetryRegression(''%s'') first.', ...
+                    fitLabelModel, rois{ri}, fitFileModel, projectName);
+            end
+            Fmodel = load(fitFileModel);
+            beta1 = Fmodel.estimates(1)/2; % mainCardinal
+            beta2 = Fmodel.estimates(2)/2; % derivedCardinal
+            beta3 = Fmodel.estimates(3)/2; % mainSubset
+            beta4 = Fmodel.estimates(4)/2; % derivedSubset
 
-        % Plot 68% CI per point -- top layer. Error bar color/alpha
-        % matches its own condition (pro = full color, con = same
-        % 50%-white-blended color used for con's marker/line).
+            thetaFine = linspace(0, 360, 361); % 1-degree resolution, smooth curve
+            switch termIdx
+                case 1
+                    modelPro = Fmodel.grandInterceptFE + beta1 + beta2*cosd(4*thetaFine);
+                case 2
+                    modelPro = Fmodel.grandInterceptFE + beta2 + beta1*cosd(4*thetaFine);
+                case 3
+                    modelPro = Fmodel.grandInterceptFE + beta1 + beta3 + beta2*cosd(4*thetaFine) + beta4*cosd(2*thetaFine);
+                case 4
+                    modelPro = Fmodel.grandInterceptFE + beta2 + beta4 + beta1*cosd(4*thetaFine) + beta3*cosd(2*thetaFine);
+            end
+
+            % Line widths match the original connecting-line widths exactly
+            % (proLineWidth/conLineWidth genuinely differ per COLORS.json --
+            % con is thinner than pro for this asymmetry, same as
+            % everywhere else in this pipeline).
+            polarplot(deg2rad(thetaFine), modelPro, '-', 'Color', proEdgeColor, 'LineWidth', proLineWidth);
+            hold on
+
+            % Con: a manually-constructed dash pattern (NaN-separated
+            % segments), not MATLAB's native ':' -- native LineStyle
+            % exposes no control over dash-length vs. gap independently.
+            % dashDeg is the visible segment length, gapDeg the invisible
+            % break between segments (both in degrees of the 360-degree
+            % circle); gapDeg is half of the visual gap the native ':'
+            % was producing, dashDeg left matching that same look.
+            % Tunable if the ratio needs further adjustment.
+            dashDeg = 3; gapDeg = 1.5;
+            unitDeg = dashDeg + gapDeg;
+            thetaCon = [];
+            for u = 0:ceil(360/unitDeg)-1
+                segStart = u*unitDeg;
+                if segStart >= 360, break; end
+                segEnd = min(segStart+dashDeg, 360);
+                thetaCon = [thetaCon, segStart:0.5:segEnd, NaN]; %#ok<AGROW>
+            end
+            switch termIdx
+                case 1
+                    modelConDashed = Fmodel.grandInterceptFE - beta1 - beta2*cosd(4*thetaCon);
+                case 2
+                    modelConDashed = Fmodel.grandInterceptFE - beta2 - beta1*cosd(4*thetaCon);
+                case 3
+                    modelConDashed = Fmodel.grandInterceptFE + beta1 - beta3 + beta2*cosd(4*thetaCon) - beta4*cosd(2*thetaCon);
+                case 4
+                    modelConDashed = Fmodel.grandInterceptFE + beta2 - beta4 + beta1*cosd(4*thetaCon) - beta3*cosd(2*thetaCon);
+            end
+            polarplot(deg2rad(thetaCon), modelConDashed, '-', 'Color', conEdgeColor, 'LineWidth', conLineWidth);
+            hold on
+        end
+
+        % Plot 68% CI per point -- drawn BEFORE the markers (below them in
+        % z-order) so the pro marker's white outline (below) sits on top
+        % of the whisker instead of the whisker cutting across it, same
+        % fix used for the mean dot in plot2_experimentalCond.m's
+        % subjectwiseDiff mode. Error bar color/alpha matches its own
+        % condition (pro = full color, con = same 50%-white-blended color
+        % used for con's marker/line).
         p1 = polarplot([deg2rad(anglevals); deg2rad(anglevals)], [vals_1 - ci68_halfwidth; vals_1 + ci68_halfwidth], '-', 'Color', proEdgeColor, 'LineWidth',errorbarLineWidth);
         hold on
         p2 = polarplot([deg2rad(anglevals); deg2rad(anglevals)], [vals_2 - ci68_halfwidth; vals_2 + ci68_halfwidth], '-', 'Color', conEdgeColor, 'LineWidth',errorbarLineWidth);
+        hold on
+
+        % Markers, exactly once per location, drawn on top of the model
+        % curves and error bars above. Pro is solid-filled with a thin
+        % white outline (half of plot2_experimentalCond.m's already-halved
+        % subjectwiseDiff outline, i.e. proLineWidth/4) rather than its own
+        % colored edge -- same "filled dot, white outline" convention used
+        % there. Its MarkerSize is grown from markerSize to
+        % markerSize+proLineWidth so the face alone now spans what the
+        % OLD pro dot's (and the unchanged con/unfilled dot's) total
+        % face+outline footprint occupied. Con stays exactly as before
+        % (white face, colored edge, at the original markerSize/
+        % proLineWidth) -- it's the "unfilled" dot whose current size is
+        % the sizing reference for pro's new face.
+        whiteOutlineLineWidth_ = proLineWidth/4;
+        proMarkerSizeFilled_ = markerSize + proLineWidth;
+        polarplot(deg2rad(anglevals),vals_1, 'o', 'LineStyle', 'none', 'MarkerSize', proMarkerSizeFilled_, 'MarkerFaceColor', proFaceColor, 'MarkerEdgeColor', 'w', 'LineWidth', whiteOutlineLineWidth_)
+        hold on
+        polarplot(deg2rad(anglevals),vals_2, 'o', 'LineStyle', 'none', 'MarkerSize', markerSize, 'MarkerFaceColor', conFaceColor, 'MarkerEdgeColor', conEdgeColor, 'LineWidth',proLineWidth)
         hold on
 
 %        for subjectIndex = 1:size(medianBOLDpa, 4)
@@ -488,10 +633,17 @@ function plot1_experimentalCond(medianBOLDpa, asymmetryName, projectSettings, va
     fig1.Color = 'w';
     hold off;
     
+    % ROI name(s) plotted in this call, joined with '-' -- included in the
+    % filename so re-running for a different cortical area (or set of
+    % areas) doesn't silently overwrite another area's file. Today this is
+    % always just the single ROI in projectSettings.rois (production is
+    % currently scoped to rois(1), i.e. V1 only), but this works
+    % unchanged if that scope is ever widened to multiple/other areas.
+    roiNameStr = strjoin(rois, '-');
     if plotModelToo==1
-        filename = fullfile(figureDir,sprintf('polarangle_%s_%s_%s', comparisonName, projectName, asymmetryName,'wModel'));
+        filename = fullfile(figureDir,sprintf('polarangle_%s_%s_%s_%s_wModel', comparisonName, projectName, asymmetryName, roiNameStr));
     else
-        filename = fullfile(figureDir,sprintf('polarangle_%s_%s_%s', comparisonName, projectName, asymmetryName));
+        filename = fullfile(figureDir,sprintf('polarangle_%s_%s_%s_%s', comparisonName, projectName, asymmetryName, roiNameStr));
     end
 
     % Save the exact values underlying this figure alongside the PDF, so

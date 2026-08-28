@@ -208,7 +208,12 @@ for ci=1:numel(is_mainsubset) %isradial)
     % visual field locations
     
     plot2_experimentalCond(meanBOLDpa, 'mainCardinalVsMainOblique', projectSettings, subset) %radialvstang)
-    
+
+    % same asymmetry, alternate rendering: per-subject raw differences
+    % (x=1, jittered) + group mean/95% CI (x=2) instead of two dots/grey
+    % lines -- see plot2_experimentalCond.m's plotType argument.
+    plot2_experimentalCond(meanBOLDpa, 'mainCardinalVsMainOblique', projectSettings, subset, 'model', 'subjectwiseDiff')
+
     counter = counter+1;
 end
 
@@ -270,6 +275,10 @@ for ci=1:numel(n_derivedConditions)
     % visual field locations
     
     plot2_experimentalCond(proconMatrix, 'derivedCardinalVsDerivedOblique', projectSettings, subset)
+
+    % same asymmetry, alternate rendering -- see the MAIN CONDITION loop's
+    % identical addition above for what this shows.
+    plot2_experimentalCond(proconMatrix, 'derivedCardinalVsDerivedOblique', projectSettings, subset, 'model', 'subjectwiseDiff')
 
 end
 

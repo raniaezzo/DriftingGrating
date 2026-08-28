@@ -216,27 +216,82 @@ box on
 set(gca,'linewidth',1, 'YColor', [0 0 0]);
 set(gca,'linewidth',1, 'XColor', [0 0 0]);
 
-w = p(3)-p(3)*.835; h = p(4)-p(4)*.8;
+% Subplot size/placement solved analytically to maximize how much of the
+% square placeholder axes (p, drawn above with the box/+  border) the 8
+% polar subplots cover, leaving only a small gap between adjacent ones --
+% replacing the old fixed-fraction w/h (previously only ~16-20% of p) and
+% empirically-averaged radius. Each subplot is a SQUARE bounding box of
+% side s (w=h, since a polar plot's circular content is best served by a
+% square box, and uniform squares at evenly-spaced compass angles give a
+% uniform gap all the way around, unlike the old unequal w/h).
+%
+% Two constraints, both solved for s and the placement radius R:
+%   1) Boundary: the two CARDINAL subplots (angle 0/90/180/270) reach
+%      farthest along one axis, at R + s/2 from center -- this must not
+%      exceed p's own half-width, p(3)/2 (p is square by construction, so
+%      the same limit applies in x and y).
+%   2) No-overlap: for two adjacent (45-degree-separated) axis-aligned
+%      squares both at radius R, they clear each other once their center
+%      separation along EITHER axis reaches s (they only need to clear on
+%      one axis, not both); the smaller of the two axis separations
+%      between 45-degree-adjacent points is R*(1-cosd(45)), so the
+%      tightest non-overlap bound is s <= R*(1-cosd(45))... the LARGER
+%      axis separation, R*cosd(45), is the one that actually matters
+%      (only one axis needs to clear), giving s <= R*cosd(45).
+% gapFactor<1 backs off from the exact touching point (s=R*cosd(45)) by a
+% small margin, at the boundary constraint's full extent -- solving the
+% two simultaneously for a given gapFactor:
+%   R + gapFactor*cosd(45)*R/2 = p(3)/2  =>  R = (p(3)/2) / (1 + gapFactor*cosd(45)/2)
+gapFactor = 0.92; % how close adjacent subplots get to touching (1 = touching, 0 = no size at all)
+R = (p(3)/2) / (1 + gapFactor*cosd(45)/2);
+s = gapFactor * cosd(45) * R;
+w = s; h = s;
 left = p(1)+p(3)/2-(w/2); bottom = p(2)+p(4)/2-(h/2);
 origin = [left bottom w h];
 
-% Equal-radius placement (by construction, via trigonometry) for all 8
-% locations, replacing the original script's separate "straight"/"diag"
-% magnitudes (1.6 vs 1.1*sqrt(2)~=1.556), which were close but not
-% exactly equal -- radius chosen to roughly match that original visual
-% spacing (average of the two).
-% Each subplot is placed at its own location's actual polar angle
-% (anglevals(li)) as the compass direction from center -- same design
-% intent as the original script (location value N(pos) doubled as the
-% spatial placement angle), just computed directly via trigonometry
-% instead of 8 hand-picked shift vectors.
-radius = mean([w, h]) * mean([1.6, 1.1*sqrt(2)]);
+radius = R;
 shifts = cell(1,8);
 for k = 1:8
     shifts{k} = [radius*cosd(anglevals(k)), radius*sind(anglevals(k)), 0, 0];
 end
 
-dotsize = 8;
+violetColor = [148, 0, 211] / 255; % DarkViolet, replaces the previous plain red (dots)
+violetColorLight = 0.2*violetColor + 0.8*[1 1 1]; % lighter tint for the connecting curve, so the line reads distinctly from the black dots (lightened further per feedback: was 0.5, decreased 30 points)
+
+% Dot face size and line width (both marker outlines and the connecting
+% curve), scaled to match plot1_experimentalCond.m's own dot-size-to-
+% axes-width and line-width-to-axes-width ratios, applied to THIS
+% script's own (differently-sized, unchanged) polar axes -- so the two
+% scripts' dots/lines read as visually consistent despite the different
+% subplot sizes. plot1_experimentalCond.m's polar axes are a fixed 4x4cm
+% square with MarkerSize=6*0.8=4.8pts and LineWidth=proLineWidth=1pt (both
+% MATLAB points, independent of screen DPI). Every one of this script's 8
+% polar subplots shares the same SIZE (only position shifts per location,
+% per the trigonometric placement above), so this only needs computing
+% once, via a single throwaway axes at 'origin'.
+tmpAx = axes(gcf, 'Units', 'normalized', 'Position', origin, 'Visible', 'off');
+tmpAx.Units = 'points';
+polarAxesWidth_pts = min(tmpAx.Position(3:4)); % smaller dimension = the constraining one for a circular polar plot
+delete(tmpAx);
+plot1_polarPlotWidth_pts = 4 * 72/2.54; % plot1_experimentalCond.m's polarPlotWidth_cm=4, converted to points
+plot1_markerSize_pts = 6 * 0.8; % plot1_experimentalCond.m's markerSize
+plot1_lineWidth_pts = 1; % plot1_experimentalCond.m's proLineWidth (COLORS.json value for mainCardinalVsMainOblique/dg, used as the reference stroke width)
+dotSize = 2 * polarAxesWidth_pts * (plot1_markerSize_pts / plot1_polarPlotWidth_pts); % 2x per feedback (SizeData, i.e. area, doubled -- not diameter)
+lineW = polarAxesWidth_pts * (plot1_lineWidth_pts / plot1_polarPlotWidth_pts); % connecting-curve width; back to 1x per feedback (was briefly 2x, now 2x thinner than that -- markerOutlineW below follows proportionally)
+markerOutlineW = lineW / 4; % plot1_experimentalCond.m's dots use proLineWidth/4 for their white outline, not the full proLineWidth the curve uses
+
+% Redundant-marker fade: which of the 8 DISPLAYED compass positions get
+% faded is fixed by DISPLAY angle (0-135 = full opacity, 180-315 =
+% faded), not by which raw direction code originally landed there --
+% da's plotShift rotation would otherwise rotate the faded half around
+% with each subplot, making the pattern inconsistent location to
+% location. Computed per-location below (plotShift varies by pa); for dg
+% (plotShift=0 always) this reduces to the raw-code split (mdirvals_dg
+% vs the +180 duplicates), same thing either way. Heavily faded (95%
+% white blend, not a subtle one) so it's unambiguous at these marker
+% sizes.
+alphaBlend = @(c) 0.35*c + 0.65*[1 1 1]; % was 0.05 (too faint per feedback), increased 30 points
+
 globalMin = -0.5;
 globalMax = 1;
 
@@ -252,16 +307,110 @@ for li = 1:8 % location, matches anglevals(li) -- same subplot spatial position 
     predicted = M * estimatesVec;
     modelPlotVals(li,:) = predicted';
 
-    rhoModel = [predicted; predicted(1)];
-    polarplot(deg2rad([N N(1)]), rhoModel, 'r', 'linewidth', 2)
+    % Smooth harmonic curve connecting the model dots, replacing the
+    % original straight-line interpolation between them. Each subplot
+    % here fixes theta_V = pa (this location's own polar angle); theta
+    % is the stimulus ORIENTATION, swept continuously -- the roles of
+    % theta_stim/theta_V are swapped relative to plot1_experimentalCond.m's
+    % polar plots (there theta was the polar-angle location, with
+    % orientation implicit in which discrete asymmetry was plotted), but
+    % the underlying model is the exact same 4-term harmonic:
+    %   y(theta_stim) = grandIntercept
+    %       + b_mainCardinal    * cos(4*theta_stim)
+    %       + b_derivedCardinal * cos(4*(theta_stim-theta_V))
+    %       + b_mainSubset      * mainSubsetFn(theta_stim)
+    %       + b_derivedSubset   * derivedSubsetFn(theta_stim,theta_V)
+    % mainCardinal/derivedCardinal are project-independent (cardinal-
+    % oblique is always a pure 4-fold function of orientation alone, or
+    % of orientation-relative-to-location, regardless of project).
+    % mainSubset/derivedSubset are NOT project-independent -- da's raw
+    % predictors use a different sign/structure than dg's (da's
+    % derivedSubset is a PRODUCT with the 4-fold cardinal term, not a
+    % plain cos(2*diff)). Both forms verified (separately, exhaustively)
+    % to reproduce the discrete mainSubsetGrid/derivedSubsetGrid values
+    % above exactly -- zero absolute error against the ismember/abs-
+    % difference logic at all 8 locations x 8 directions, both projects
+    % -- before being used here for the continuous sweep.
+    pa = anglevals(li);
+
+    % da's stimuli (annulus/pinwheel/spirals) are defined in a POLAR
+    % reference frame, not Cartesian -- the same raw orientation code
+    % (e.g. 90 = pinwheel) has a DIFFERENT local Cartesian orientation
+    % depending on which location it's shown at (a pinwheel is always
+    % locally RADIAL, so its Cartesian angle rotates with location). The
+    % regression betas and the mainCardinal/derivedCardinal/mainSubset/
+    % derivedSubset predictor labels above are already correct -- the
+    % design matrix they were fit on is location-based and already
+    % accounts for this. This is purely a PLOTTING-angle correction:
+    % verified against 32 (orientation, location) pairs, the true local
+    % Cartesian angle is (rawCode + pa - 90) mod 180, i.e. every raw
+    % direction code needs an additional rotation of (pa-90) degrees to
+    % land at its true local Cartesian angle within THIS location's own
+    % subplot (no rotation at the UVM itself, pa=90, where the polar and
+    % Cartesian frames coincide by design). dg's gratings are already
+    % defined directly in Cartesian terms, so no rotation applies there.
+    if strcmp(projectName, 'da')
+        plotShift = pa - 90;
+    else
+        plotShift = 0;
+    end
+
+    % Fixed DISPLAY-angle fade split for this location's markers (see
+    % comment above alphaBlend's definition) -- N positions that land at
+    % displayed angle >= 180 after rotation get faded, < 180 stay full
+    % opacity, regardless of which raw direction code they came from.
+    isMirrored = mod(N+plotShift,360) >= 180;
+
+    thetaFine = 0:1:360;
+    mainCardinal_f = cosd(4*thetaFine);
+    derivedCardinal_f = cosd(4*(thetaFine-pa));
+    if strcmp(projectName, 'dg')
+        mainSubset_f = cosd(2*thetaFine);
+        derivedSubset_f = cosd(2*(thetaFine-pa));
+    else
+        mainSubset_f = -cosd(2*thetaFine);
+        derivedSubset_f = -cosd(4*thetaFine) .* cosd(2*(thetaFine-pa));
+    end
+    predictedSmooth = estimatesVec(1) + estimatesVec(2)*mainCardinal_f + estimatesVec(3)*derivedCardinal_f ...
+        + estimatesVec(4)*mainSubset_f + estimatesVec(5)*derivedSubset_f;
+
+    % The curve is exactly 180-periodic in theta_stim (every harmonic
+    % term above is built from cos(2*theta)/cos(4*theta)), so its
+    % second half is mathematically redundant with its first, same as
+    % the markers -- split it the same way, by DISPLAY angle, using NaN
+    % gaps (not a boolean subset) so each color's polarplot call stays
+    % correctly connected across the wrap rather than drawing a stray
+    % chord between the two disjoint runs a rotated split can produce.
+    dispTheta = mod(thetaFine+plotShift,360);
+    curveIsMirrored = dispTheta >= 180;
+    rhoOriginalHalf = predictedSmooth; rhoOriginalHalf(curveIsMirrored) = NaN;
+    rhoMirroredHalf = predictedSmooth; rhoMirroredHalf(~curveIsMirrored) = NaN;
+    polarplot(deg2rad(dispTheta), rhoOriginalHalf, '-', 'Color', violetColor, 'LineWidth', lineW)
     hold on
-    q = polarplot(deg2rad([N N(1)]), rhoModel, 'o', 'LineWidth', 2, 'MarkerFaceColor', 'r', 'MarkerSize', dotsize);
-    q.MarkerEdgeColor = 'w';
+    polarplot(deg2rad(dispTheta), rhoMirroredHalf, '-', 'Color', violetColorLight, 'LineWidth', lineW)
     hold on
 
+    % Model dots disabled per feedback -- curve only. Left commented
+    % (not deleted) so they're easy to bring back.
+    % q1 = polarplot(deg2rad(mod(N(~isMirrored)+plotShift,360)), predicted(~isMirrored), 'o', ...
+    %     'LineWidth', markerOutlineW, 'MarkerFaceColor', violetColor, 'MarkerSize', dotSize);
+    % q1.MarkerEdgeColor = 'w';
+    % hold on
+    % q2 = polarplot(deg2rad(mod(N(isMirrored)+plotShift,360)), predicted(isMirrored), 'o', ...
+    %     'LineWidth', markerOutlineW, 'MarkerFaceColor', alphaBlend(violetColor), 'MarkerSize', dotSize);
+    % q2.MarkerEdgeColor = 'w';
+    % hold on
+
+    dataDotSize = dotSize * 0.6 * 2; % doubled per feedback (was 0.6x the old model-dot size, now model dots are gone -- this is 1.2x that reference size)
     dataDot = weightedBold(:,li);
-    pdot = polarplot(deg2rad(N), dataDot, 'ok', 'LineWidth', 1, 'MarkerFaceColor', 'black', 'MarkerSize', dotsize/1.5);
-    pdot.MarkerEdgeColor = 'w';
+    pdot1 = polarplot(deg2rad(mod(N(~isMirrored)+plotShift,360)), dataDot(~isMirrored), 'o', ...
+        'LineWidth', markerOutlineW, 'MarkerFaceColor', 'black', 'MarkerSize', dataDotSize);
+    pdot1.MarkerEdgeColor = 'w';
+    hold on
+    pdot2 = polarplot(deg2rad(mod(N(isMirrored)+plotShift,360)), dataDot(isMirrored), 'o', ...
+        'LineWidth', markerOutlineW, 'MarkerFaceColor', alphaBlend([0 0 0]), 'MarkerSize', dataDotSize);
+    pdot2.MarkerEdgeColor = 'w';
+    hold on
     pax.FontSize = 6;
     pax.RTickLabel = {''};
     pax.ThetaTickLabel = {''};
