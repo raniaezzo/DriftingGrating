@@ -141,6 +141,11 @@ ExperimentCode/   Psychtoolbox stimulus presentation code (not analysis).
 Simulations/      Standalone motion-vector demo scripts.
 Reproduction/     Scripts for pulling data from a remote server.
 Support/          draft.pdf (the manuscript) and a summary CSV table.
+FIGURES.md        Script-by-script data lineage for every manuscript figure
+                  (polar, pairwise, subjectwise, context-comparison,
+                  directions-per-location, across-cortical-area, TTA, and
+                  model-vs-observed time-series plots) -- read this before
+                  touching any figure-generating script.
 ```
 
 ### AnalysisCode/ subfolder pipeline order
@@ -160,17 +165,12 @@ top-to-bottom for every analysis — the two chains that matter most this year:
    group-level matrices `meanBOLD(pa)`/`medianBOLD(pa)` that everything
    downstream consumes. **This is the one script that actually defines the ROI
    dimension's order** (see ROI ordering gotcha below).
-4. **`04_plot_betaAsymmetries/`** — the main analysis + figures:
-   - `plot_NeuralAsymmetries.m` → `plot1_experimentalCond.m` (polar plots) /
-     `plot2_experimentalCond.m` (pairwise, equal-PA-weighted plots): model-free
-     per-asymmetry summaries.
-   - `lme1_fit.m`: the linear mixed-effects model (all 4 asymmetries fit
-     jointly per ROI), plus a subject-bootstrap for CIs, plus three sets of
-     figures (per-asymmetry-across-ROIs, the "master" ROI-1 summary, and a
-     per-ROI version of the master figure).
-   - `lme2_ploteachDirLoc.m`: polar plots of the fitted model vs. raw data,
-     per absolute direction/location — reads `lme1_fit.m`'s saved
-     `modeldata.mat`/`LME_bold.mat`, has no logic of its own.
+4. **`04_plot_betaAsymmetries/`** — the main analysis + figures. See
+   `FIGURES.md` for the full script-by-script breakdown of every figure type
+   and exactly where its data comes from; the short version is that
+   `plot_NeuralAsymmetries.m` orchestrates most of it, `lme1_fit.m` is the
+   original (legacy) joint model, and `fitAsymmetryRegression.m`'s cache has
+   since become the shared source for most current figures.
 
 Data (`meanBOLD*.mat`, GLM results, FreeSurfer labels, etc.) lives **outside
 this git repo**, on a network volume at
@@ -274,15 +274,6 @@ of any duplicate pair from the group average. Per-run/per-subject-only
 outputs (e.g. `run_runTimeseries.m` / `plot_runTimeseries.m`, which plot
 each run separately and never average across runs) are unaffected and need
 no changes.
-
-### Figure-export loops need `drawnow` before `print()`
-`lme1_fit.m` previously had a real bug where two figures generated back-to-back
-in the same loop (`mainSubset`/`derivedSubset` asymmetries) were saved with
-*identical* content — colors, legend, and data all from the wrong figure —
-because `print()` grabbed a stale render before MATLAB finished drawing the
-legend/boxcharts. Fixed by calling `drawnow;` immediately before every
-`print(...)` inside a loop that creates multiple figures. Any new
-figure-generation loop added to this pipeline should do the same.
 
 ## Models/ (Python) — normalization simulations
 

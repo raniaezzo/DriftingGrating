@@ -282,6 +282,19 @@ for ci=1:numel(n_derivedConditions)
 
 end
 
+%% All 4 asymmetries, cortical areas along the x-axis (one figure per
+% asymmetry) -- successor to lme1_fit.m's "plot across ROIs" section, not
+% part of either loop above since it reads all 4 termIdx from the cached
+% fit itself in one call. No projectSettings.fitLabel override -- the
+% default (fitLabel=projectName) is what gives dg its own full 13-subject
+% cache and da its own 7, per this project's cached fits.
+%
+% Uses the FULL 8-ROI list (rois, captured above before line 29 restricted
+% projectSettings.rois to V1-only for the pairwise-style plots above) --
+% this plot is deliberately across all cortical areas, unlike those.
+projectSettingsAllROIs = projectSettings;
+projectSettingsAllROIs.rois = rois;
+plotAsymmetryAcrossROIs(projectSettingsAllROIs)
 
 
 
