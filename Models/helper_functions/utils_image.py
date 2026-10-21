@@ -419,23 +419,44 @@ def visualize_filter_magnitudes(stim_energy, representative_chIdx, scale=None, s
         )
         fig.suptitle(f"Set {i}", fontsize=14)
     
+        # orientation symbols in h=0..3 order (90 vertical, 45 right-leaning,
+        # 0 horizontal, 135 left-leaning) -- this mapping was verified against
+        # the pyramid filter construction, the stimulus generator, and an
+        # empirical check; see BUG_FIXES.md.
+        ori_symbols = ['|', '/', '-', '\\']
+
         for h in range(n_ori):  # orientation
             for j in range(n_stimuli):  # stimulus index
                 ax = axes[h, j]
-    
+
                 img = stim_energy[i, j][representative_chIdx, h]  # select correct image
                 ax.axis('off')
-    
+
                 # shared vs independent color scale
                 if share_color_range:
                     im = ax.imshow(img, cmap='gray', norm=norm)
                 else:
                     im = ax.imshow(img, cmap='gray')
-    
+
                 # optional colorbar
                 if cbar:
                     cb = plt.colorbar(im, ax=ax, format="%.2e", fraction=0.046, pad=0.04)
                     cb.ax.tick_params(labelsize=8)
+
+                # row label: orientation channel (always meaningful, same for
+                # every stimulus set)
+                if j == 0:
+                    ax.text(-0.25, 0.5, ori_symbols[h], transform=ax.transAxes,
+                            fontsize=16, fontweight='bold', ha='center', va='center')
+
+                # column label: stimulus orientation -- only a single fixed
+                # bar orientation for the Cartesian set (i==0), where stimulus
+                # j is generated at exactly that orientation. The polar set's
+                # stimuli (pin/spirR/ann/spirL) don't have one fixed local
+                # orientation, so they aren't labeled with a symbol here.
+                if h == 0 and i == 0:
+                    ax.text(0.5, 1.15, ori_symbols[j], transform=ax.transAxes,
+                            fontsize=16, fontweight='bold', ha='center', va='center')
     
         fig.supxlabel('Input Stimuli', fontsize=14)
         fig.supylabel('Orientation Channel', fontsize=14)
@@ -951,93 +972,6 @@ def plot_energy_per_location_polar(stim_energy, representative_chIdx, analysis_n
 
     
         
-def canonical_normalization(stim_energy, pixpdeg, representative_chIdx=0, p_exp = 1, q_exp = 1, tuned=False):
-
-    # note that inversion occurs with tuned=False, sigma=0.01 or 0.1, p_exp=1, q_exp=2, std_deg=3
-    
-    # normalization strength (when sigma is large --> less normalization; approaching 0 is strong normalization)
-    sigma = 0.1
-    
-    # p_exp: exponent on numerator often 1 or 2
-    # q_exp: The exponent q > 1 makes suppression superlinear, meaning strong signals get disproportionately more 
-                  # normalized than weak ones. This matches divisive gain control models in which suppressive drive grows faster 
-                  # than linear with local contrast. Excitation grows slower than suppression
-    
-    # std of spatial gaussian
-    std_deg = 3                  # make this 1 to 5
-    std_pix = std_deg * pixpdeg
-    
-    #std_pix = np.shape(stim_energy[1,1][1,1])[0]
-    
-    [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy)
-
-    # here the input will either already be averaged into 1 dim [i,h][1,j] or we select the dimension w/representative_chIdx
-    if representative_chIdx > n_sf:
-        raise ValueError(f"Error: spatial frequency channels of input are {n_sf}. Likely already reduced in a previous step.")
-
-    # initialized output -- will be [i,h][1,j]
-    norm_energy = {
-    key: np.full((1,) + val.shape[1:], np.nan)
-    for key, val in stim_energy.items()
-    }
-
-    suppression_field = {
-    key: np.full((1,) + val.shape[1:], np.nan)
-    for key, val in stim_energy.items()
-    }
-    
-    energy = {
-        key: np.full((1,) + val.shape[1:], np.nan)
-        for key, val in stim_energy.items()
-    }
-    
-    for i in range(n_set):              # e.g. Cartesian, Polar
-        for j in range(n_stimuli):  # stimulus index
-
-            # this will be used to compute the overall suppressive drive accounting for all orientations
-            pooled = np.sum(stim_energy[i,j][0,:] ** q_exp, axis=0)     # pool across orientations first
-            #np.shape(stim_energy)
-            Z = gaussian_filter(pooled, sigma=std_pix)             # convolve pooled energy across all orientation channels
-            
-            for h in range(n_ori):          # orientation
-
-                energy[i,j][0,h] = stim_energy[i, j][representative_chIdx, h]
-
-                if tuned==False:
-                    # ----------------------------------------
-                    # UNTUNED NORMALIZATION
-                    # ----------------------------------------
-
-                    # use this if want to compute suppression per orientation channel
-                    #suppression_field[i,j][0,h] = gaussian_filter(energy[i, j][0, h] ** q_exp, sigma=std_pix)
-                    #print(np.shape(suppression_field[i,j][0,h]))
-                    #print(type(suppression_field[i,j][0,h]))
-
-                    # use this if want to use the same suppressive drive for all orientation channels
-                    suppression_field[i,j][0,h] = Z
-                    
-                elif tuned==True:
-                    # ----------------------------------------
-                    # ORIENTATION-TUNED NORMALIZATION
-                    # ----------------------------------------
-
-                    # 1) Orientation-tuned spatial surround for orientation h
-                    S_h = gaussian_filter(stim_energy[i,j][0,h] ** q_exp, sigma=std_pix)
-
-                    # 2) Cross-orientation suppression for orientation h
-                    other_oris = [o for o in range(n_ori) if o != h]
-                    C_h = np.sum([stim_energy[i,j][0,o] for o in other_oris], axis=0)
-
-                    # 3) Total suppression
-                    suppression_field[i,j][0,h] = S_h + C_h
-
-                norm_energy[i,j][0,h] = energy[i,j][0,h] ** p_exp / (sigma + suppression_field[i,j][0,h])
-                
-    return norm_energy
-
-
-
-
 
 def div_normalization(stim_energy, pixpdeg, p_exp = 1, q_exp = 1, tuned=False, device=None):
 
@@ -1119,52 +1053,6 @@ def div_normalization(stim_energy, pixpdeg, p_exp = 1, q_exp = 1, tuned=False, d
 
 
 
-
-
-def normalization_byAnisotropy(stim_energy, pixpdeg):
-
-    # normalization strength (when sigma is large --> less normalization; approaching 0 is strong normalization)
-    sigma = 0.01
-    
-    # take mean across SF channels
-    stim_energy_SFave = {
-        key: np.mean(val, axis=0, keepdims=True)
-        for key, val in stim_energy.items()
-    }
-
-    [n_set, n_stimuli, n_ori, n_sf] = retrieve_dim(stim_energy_SFave)
-
-    energy = {
-        key: np.full((n_sf, n_ori), np.nan)
-        for key in stim_energy_SFave.keys()
-    }
-
-    std_energy = {
-        key: np.full((1, 1), np.nan)
-        for key in stim_energy_SFave.keys()
-    }
-
-    norm_energy = {
-        key: np.full((n_sf, n_ori), np.nan)
-        for key in stim_energy_SFave.keys()
-    }
-    
-    for i in range(n_set):              # e.g. Cartesian, Polar
-        for j in range(n_stimuli):      # stimulus index
-            for s in range(n_sf):      # sf
-                for h in range(n_ori):      # orientation
-
-                    img = stim_energy_SFave[i, j][s, h]
-                    energy[i,j][s,h] = np.sum(img) / img.size
-
-                # now compute the std 
-                vals = energy[i,j][s, :]          # shape (4,)
-                
-                std_energy[i,j][s,0] = np.std(vals)
-
-                norm_energy[i,j][s,:] = vals / (sigma + std_energy[i,j][s,0])
-
-    return norm_energy
 
 
 def normalization_byAnisotropy_NOA(stim_energy, pixpdeg):
@@ -1249,17 +1137,17 @@ def normalization_byStimHomogeneity(stim_energy, pixpdeg, device=None):
     Returns norm_energy with the *same shape*.
     """
 
-    sigma = 0.01
+    sigma = 0.1 # I adjusted this a bit so to test whether the radial can survive (was 0.01) - probbaly should make this a free param
     p_exp = 1
-    sigma_center_deg = 3
-    sigma_surround_deg = 10
+    # sigma_center_deg = 3
+    # sigma_surround_deg = 10
     
-    # Convert degrees → pixels
-    #sigma_c = sigma_center_deg * pixpdeg
-    #sigma_s = sigma_surround_deg * pixpdeg
+    # # Convert degrees → pixels
+    # #sigma_c = sigma_center_deg * pixpdeg
+    # #sigma_s = sigma_surround_deg * pixpdeg
 
-    sigma_c = 1 # make as small as possible (1 pixel)
-    sigma_s = 3 * pixpdeg
+    sigma_c = 1 #1 # make as small as possible (1 pixel)
+    sigma_s = 10 * pixpdeg #3 * pixpdeg
     
     
     # average across SF?
@@ -1403,7 +1291,29 @@ def orientation_weight(theta, ori_angles, h):
     return w
     
 
-def imposeImbalance(stim_energy, cardinal=1, radial=1):
+def imposeImbalance(stim_energy, cardinal=1, radial=1, keepScale=0):
+
+    # keepScale=0 (default): leave the gain applied as-is (original behavior) --
+    #   cardinal/radial only ever boost energy (gain >= 1 everywhere), so the
+    #   post-imbalance ceiling exceeds the pre-imbalance [0,1] per-pixel bound
+    #   (up to cardinal*radial for the vertical/horizontal channels, since the
+    #   two gains stack multiplicatively there).
+    # keepScale=1: divide every value by the largest gain that could have been
+    #   applied anywhere (cardinal*radial) -- a single constant, the SAME for
+    #   every stimulus -- restoring the strict [0,1] ceiling for interpreting
+    #   sigma. This is deliberately NOT a per-stimulus correction: an earlier
+    #   version of this function computed each stimulus's own before/after
+    #   ratio and rescaled by that, which forces every stimulus's total back
+    #   to exactly its own unweighted baseline -- silently erasing the actual
+    #   experimental effect (cardinal/radial-aligned stimuli should end up
+    #   with MORE total response than unaligned ones; that's the entire point
+    #   of the manipulation). A single global divisor avoids this: it still
+    #   shrinks untouched channels/locations below their true baseline (there
+    #   is no single divisor that both caps the ceiling at 1 and leaves
+    #   untouched parts exactly at baseline, since the gain field isn't
+    #   constant), but it preserves the relative cardinal/radial-vs-baseline
+    #   difference in total energy across stimuli, which any per-stimulus
+    #   correction cannot.
 
     w = 22.5
 
@@ -1414,7 +1324,12 @@ def imposeImbalance(stim_energy, cardinal=1, radial=1):
     yc, xc = (H - 1) / 2, (W - 1) / 2
 
     y, x = np.meshgrid(np.arange(H), np.arange(W), indexing='ij')
-    theta = (np.degrees(np.arctan2(y - yc, x - xc)) + 360) % 360
+    # NOTE: y is negated to match the angle convention used by
+    # get_stats_within_eccentricity_by_angle (screen y increases downward, so
+    # this flips to the standard math/polar convention). Without this, this
+    # function's theta is a vertical mirror of the one used everywhere else
+    # in the pipeline -- see BUG_FIXES.md.
+    theta = (np.degrees(np.arctan2(-(y - yc), x - xc)) + 360) % 360
 
     stim_energy_imb = copy.deepcopy(stim_energy)
     
@@ -1433,11 +1348,16 @@ def imposeImbalance(stim_energy, cardinal=1, radial=1):
             ##### RADIAL OVERREPRESENTATION
             if radial!=1:
                 # for polar, need to define radial based on polar angle and channel
+                # radial-preferred angles = where a line pointing outward from
+                # the image center has that channel's own bar orientation
+                # (90/0/45/135 deg for h=0/1/2/3 -- see get_filter_sf_tunings /
+                # find_ori_preference_for_each_filter and BUG_FIXES.md: h=1 and
+                # h=3 were previously swapped here).
                 ori_angles = {
                     0: [90, 270], # vertical channel (radial is 90/270)
-                    1: [135,315], # up-right channel (radial is 45/225)
+                    1: [45, 225], # right-leaning ("/", 45 deg) channel (radial is 45/225)
                     2: [0, 180],  # horizontal channel (radial is 0/180)
-                    3: [45, 225] # up-left channel (radial is 135/315)
+                    3: [135, 315] # left-leaning ("\", 135 deg) channel (radial is 135/315)
                 }
     
                 #ori_masks = {h: orientation_mask(theta, ori_angles, h, w) for h in range(4)}
@@ -1454,7 +1374,12 @@ def imposeImbalance(stim_energy, cardinal=1, radial=1):
                     gain = 1.0 + (N - 1.0) * w_h   # (896, 896), in [1, 2]
                 
                     stim_energy_imb[i, j][:, h] *= gain  # broadcast over SF dimension
-                
+
+    if keepScale:
+        max_gain = cardinal * radial
+        if max_gain != 1:
+            for key in stim_energy_imb:
+                stim_energy_imb[key] = stim_energy_imb[key] / max_gain
 
     return stim_energy_imb
 

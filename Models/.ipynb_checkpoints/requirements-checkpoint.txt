@@ -1,0 +1,38 @@
+# Pinned dependencies for model_DriftingGratings.ipynb.
+#
+# These versions are taken from a known-working environment rather than
+# "latest", because plenoptic made a breaking change between 1.x and 2.x
+# (the 2.x releases drop the `plenoptic.simulate` module this notebook
+# imports), and older torch releases (<2.3ish) do not fully support
+# NumPy 2.x, producing a "compiled using NumPy 1.x" ABI warning that can
+# cascade into import failures in downstream packages. See AGENTS.md for
+# more detail.
+#
+# IMPORTANT -- Apple Silicon (arm64) vs Intel (x86_64) Mac need DIFFERENT
+# torch/numpy pins, because PyTorch dropped Intel-macOS wheels after the
+# 2.2.x series, and 2.2.x was built against NumPy 1.x's ABI:
+#   - Apple Silicon (arm64) Mac / Python 3.13: use torch==2.9.0,
+#     torchvision==0.24.0, numpy==2.3.4 (this is what's below).
+#   - Intel (x86_64) Mac: torch is capped at 2.2.2 (the last version with an
+#     x86_64 macOS wheel at all), which requires Python <=3.11 AND
+#     numpy<2 (e.g. numpy==1.26.4) to avoid the NumPy ABI warning/crash risk.
+#     Use torch==2.2.2, torchvision==0.17.2, numpy==1.26.4 instead, with a
+#     python=3.11 conda environment.
+# Run `python -c "import platform; print(platform.machine())"` to check
+# which one you have (arm64 = Apple Silicon, x86_64 = Intel).
+#
+# Install with: pip install -r requirements.txt
+
+numpy==2.3.4
+scipy==1.16.3
+pandas==2.3.3
+matplotlib==3.10.6
+seaborn
+opencv-python==4.12.0.88
+pillow
+tqdm==4.67.1
+einops==0.8.1
+ipdb==0.13.13
+torch==2.9.0
+torchvision==0.24.0
+plenoptic==1.3.1
