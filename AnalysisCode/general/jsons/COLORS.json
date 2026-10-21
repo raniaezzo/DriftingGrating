@@ -3,26 +3,50 @@
         "dg": {
             "mainCardinalVsMainOblique": {
                 "description": "Comparing responses to cartesian cardinal and oblique directions.",
-                "color_pro": [0.498, 0.749, 0.4824],
-                "color_con": [0.6863, 0.5529, 0.7647],
-		"plot_title": "Cartesian cardinal vs oblique"
+                "color_pro": [0.9373, 0.5961, 0.2510],
+                "color_con": [0.9373, 0.5961, 0.2510],
+                "pro_filled": true,
+                "con_filled": false,
+                "pro_lineWidth": 1,
+                "con_lineWidth": 0.5,
+                "con_lineStyle": "--",
+                "errorbar_lineWidth": 1,
+                "plot_title": "Cartesian cardinal vs oblique"
             },
             "derivedCardinalVsDerivedOblique": {
                 "description": "Comparing polar cardinal directions with polar oblique.",
-                "color_pro": [0.6510, 0.3804, 0.1020],
-                "color_con": [0.2510, 0.6902, 0.6510],
+                "color_pro": [0.4980, 0.7490, 0.4784],
+                "color_con": [0.4980, 0.7490, 0.4784],
+                "pro_filled": true,
+                "con_filled": false,
+                "pro_lineWidth": 1,
+                "con_lineWidth": 0.5,
+                "con_lineStyle": "--",
+                "errorbar_lineWidth": 1,
                 "plot_title": "Polar cardinal vs oblique"
             },
             "verticalVsHorizontal": {
                 "description": "Contrasting vertical and horizontal motion patterns.",
-                "color_pro": [0, 0, 0.5],
-                "color_con": [1, 0.5, 0],
+                "color_pro": [0.7961, 0.1294, 0.1569],
+                "color_con": [0.7961, 0.1294, 0.1569],
+                "pro_filled": true,
+                "con_filled": false,
+                "pro_lineWidth": 1,
+                "con_lineWidth": 0.5,
+                "con_lineStyle": "--",
+                "errorbar_lineWidth": 1,
                 "plot_title": "Horizontal vs vertical"
             },
             "radialVsTangential": {
                 "description": "Contrasting radial and tangential motion patterns.",
-                "color_pro": [0.5725, 0.7725, 0.8706],
-                "color_con": [0.7922, 0, 0.1255],
+                "color_pro": [0.1490, 0.6588, 0.8784],
+                "color_con": [0.1490, 0.6588, 0.8784],
+                "pro_filled": true,
+                "con_filled": false,
+                "pro_lineWidth": 1,
+                "con_lineWidth": 0.5,
+                "con_lineStyle": "--",
+                "errorbar_lineWidth": 1,
                 "plot_title": "Radial vs tangential"
             },
             "eachAbsmotiondir": {
@@ -65,33 +89,57 @@
                 "color_clock": [0.9176, 0.2039, 0.7333],
                 "plot_title": "Absolute orientations"
             },
- 	"plotSettings": {
-		"markerC": "w"
-	   }
+            "plotSettings": {
+                "markerC": "w"
+            }
         },
         "da": {
             "mainCardinalVsMainOblique": {
                 "description": "Comparing polar cardinal directions with polar oblique.",
-                "color_pro": [0.6510, 0.3804, 0.1020],
-                "color_con": [0.2510, 0.6902, 0.6510],
+                "color_pro": [0.4980, 0.7490, 0.4784],
+                "color_con": [0.4980, 0.7490, 0.4784],
+                "pro_filled": true,
+                "con_filled": false,
+                "pro_lineWidth": 1,
+                "con_lineWidth": 0.5,
+                "con_lineStyle": "--",
+                "errorbar_lineWidth": 1,
                 "plot_title": "Polar cardinal vs oblique"
             },
             "derivedCardinalVsDerivedOblique": {
                 "description": "Comparing responses to cartesian cardinal and oblique directions.",
-                "color_pro": [0.498, 0.749, 0.4824],
-                "color_con": [0.6863, 0.5529, 0.7647],
+                "color_pro": [0.9373, 0.5961, 0.2510],
+                "color_con": [0.9373, 0.5961, 0.2510],
+                "pro_filled": true,
+                "con_filled": false,
+                "pro_lineWidth": 1,
+                "con_lineWidth": 0.5,
+                "con_lineStyle": "--",
+                "errorbar_lineWidth": 1,
                 "plot_title": "Cartesian cardinal vs oblique"
             },
             "verticalVsHorizontal": {
                 "description": "Contrasting vertical and horizontal motion patterns.",
-                "color_pro": [0, 0, 0.5],
-                "color_con": [1, 0.5, 0],
+                "color_pro": [0.7961, 0.1294, 0.1569],
+                "color_con": [0.7961, 0.1294, 0.1569],
+                "pro_filled": true,
+                "con_filled": false,
+                "pro_lineWidth": 1,
+                "con_lineWidth": 0.5,
+                "con_lineStyle": "--",
+                "errorbar_lineWidth": 1,
                 "plot_title": "Horizontal vs vertical"
             },
             "radialVsTangential": {
                 "description": "Contrasting radial and tangential motion patterns.",
-                "color_pro": [0.5725, 0.7725, 0.8706],
-                "color_con": [0.7922, 0, 0.1255],
+                "color_pro": [0.1490, 0.6588, 0.8784],
+                "color_con": [0.1490, 0.6588, 0.8784],
+                "pro_filled": true,
+                "con_filled": false,
+                "pro_lineWidth": 1,
+                "con_lineWidth": 0.5,
+                "con_lineStyle": "--",
+                "errorbar_lineWidth": 1,
                 "plot_title": "Radial vs tangential"
             },
             "eachAbsmotiondir": {
@@ -134,9 +182,9 @@
                 "color_clock": [0.9176, 0.2039, 0.7333],
                 "plot_title": "Absolute orientations"
             },
-        "plotSettings": {
+            "plotSettings": {
                 "markerC": "k"
-           }
+            }
         },
         "dots": {
             "mainCardinalVsMainOblique": {
@@ -203,9 +251,9 @@
                 "color_clock": [0.9176, 0.2039, 0.7333],
                 "plot_title": "Absolute orientations"
             },
-        "plotSettings": {
+            "plotSettings": {
                 "markerC": "k"
-           }
+            }
         }
-}
+    }
 }

@@ -123,8 +123,9 @@ end
 
 modelfit = cell(1, n_runs);
 
+n_vertices_total = numel(modelOut{4}.HRFindex);
 for r = 1:n_runs
-    modelfit{r} = nan(size(vox_mask,1), numtimepoints(r));
+    modelfit{r} = nan(n_vertices_total, numtimepoints(r));
 end
 
 % figure

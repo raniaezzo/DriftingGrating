@@ -2,7 +2,7 @@ clc; clear all; close all
 
 % set up
 addpath(genpath(pwd));
-projectName = 'dg';
+projectName = 'da';
 subj = 'ALL';
 metric = 'meanBOLD';
 bidsDir =  '/Volumes/Vision/UsersShare/Rania/Project_dg/data_bids/';

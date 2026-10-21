@@ -53,9 +53,9 @@ end
 
 if strcmp(projectName, 'dg')
     meanBOLDpa = meanBOLDpa(:,:,:,[1,2,3,4,5,6,7,8]); % to ensure the same subjects as DA
-    meanBOLD = meanBOLD(:,:,[1,2,3,4,5,6,7,8]); 
+    meanBOLD = meanBOLD(:,:,[1,2,3,4,5,6,7,8]);
     medianBOLDpa = medianBOLDpa(:,:,:,[1,2,3,4,5,6,7,8]); % to ensure the same subjects as DA
-    medianBOLD = medianBOLD(:,:,[1,2,3,4,5,6,7,8]); 
+    medianBOLD = medianBOLD(:,:,[1,2,3,4,5,6,7,8]);
     %to include only the 8 repeat subjects
     subjects = {'sub-0037', 'sub-0201', 'sub-0255', 'sub-wlsubj123', 'sub-wlsubj124', ...
        'sub-0395', 'sub-0426', 'sub-0250'};
@@ -82,9 +82,23 @@ end
 % multiplying a subject's data by subjectScale(i) both re-weights them
 % relative to the group (low gain -> up-weighted) AND restores the overall
 % scale to be comparable to the original (unweighted) BOLD units.
+%
+% groupGain uses the geometric, not arithmetic, mean of gainWeights:
+% subjectScale is itself a multiplicative scale factor (a ratio), so
+% geometric mean is the choice under which the *geometric* mean of
+% subjectScale across observers is exactly 1 (magnitude-neutral on
+% average, in the multiplicative sense that matches what subjectScale
+% actually is) -- the arithmetic mean of gainWeights does not have this
+% property and systematically inflates the restored units. Implemented
+% via exp(mean(log(.))) rather than geomean() to avoid a dependency on
+% the Statistics and Machine Learning Toolbox.
 gainSummaryFile = fullfile(bidsDir, 'derivatives', 'summaryTables', 'gainSummary.mat');
 gainWeights = retrieveObserverGainWeights(subjects, gainSummaryFile);
-groupGain = mean(gainWeights);
+if any(gainWeights <= 0)
+    error('gainWeights must be strictly positive to take log() for the geometric mean (found %d non-positive value(s))', ...
+        sum(gainWeights <= 0));
+end
+groupGain = exp(mean(log(gainWeights)));
 subjectScale = groupGain ./ gainWeights;
 
 radialvstang = 0;

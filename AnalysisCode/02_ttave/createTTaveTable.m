@@ -65,6 +65,39 @@ stimdur_s = 3;
 allRawTables = cell(numel(subjects), 1);
 allModelTables = cell(numel(subjects), 1);
 
+% If true and the saved tables already exist on disk, load them instead of
+% recomputing (recomputing reloads raw BOLD data and GLMsingle output for
+% all 8 subjects x 2 experiments and is slow; loading is fast). Set to
+% false to force recomputation even if the files exist.
+loadExistingTables = true;
+rawTablePath = fullfile(savedir, 'ttaveTable_raw.mat');
+modelTablePath = fullfile(savedir, 'ttaveTable_model.mat');
+canLoadExisting = loadExistingTables && isfile(rawTablePath) && isfile(modelTablePath);
+
+if canLoadExisting
+
+    %% LOAD EXISTING TABLES (instead of recomputing)
+
+    fprintf('Loading existing tables from %s (set loadExistingTables=false above to force recomputation)...\n', savedir);
+
+    loaded = load(rawTablePath, 'ttaveTable_raw');
+    ttaveTable_raw = loaded.ttaveTable_raw;
+    loaded = load(modelTablePath, 'ttaveTable_model');
+    ttaveTable_model = loaded.ttaveTable_model;
+
+    for si = 1:numel(subjects)
+        allRawTables{si} = ttaveTable_raw(ttaveTable_raw.subject == subjects{si}, :);
+        allModelTables{si} = ttaveTable_model(ttaveTable_model.subject == subjects{si}, :);
+        if isempty(allRawTables{si})
+            warning('%s not found in the loaded tables -- treated as unprocessed by the plotting functions below.', subjects{si});
+        end
+    end
+
+    fprintf('Loaded %d rows (raw) / %d rows (model) for %d subjects.\n', ...
+        height(ttaveTable_raw), height(ttaveTable_model), numel(subjects));
+
+else
+
 %% PER SUBJECT
 
 for si = 1:numel(subjects)
@@ -211,6 +244,8 @@ save(fullfile(savedir, 'ttaveTable_model.mat'), 'ttaveTable_model', '-v7.3');
 fprintf('Done. Saved %d rows to ttaveTable_raw.mat and ttaveTable_model.mat in %s\n', ...
     height(ttaveTable_raw), savedir);
 
+end
+
 %% OPTIONAL: EXAMPLE PLOT
 % For one subject/ROI (included==1 vertices only), plots the "stationary"
 % (orientation, no-motion) response per polar angle bin -- raw (dashed) vs.
@@ -239,8 +274,8 @@ makeExamplePlot = true;
 exampleSubject = 'sub-wlsubj124'; %'sub-wlsubj124'; % a specific subject ID, or 'all'
 exampleROI = 'V1';
 exampleAggregation = 'peakR2'; % 'peakR2' or 'meanROI'
-offsetRawToBaseline = true;
-offsetModelToBaseline = true;
+offsetRawToBaseline = false;
+offsetModelToBaseline = false;
 savePlotsAsPDF = true;
 figSaveDir = fullfile(savedir, 'figures');
 
@@ -284,17 +319,17 @@ end
 % subjects are averaged together ('all') or restricted to one subject's
 % data, same as plotOrientationConditionsAllVoxels.
 makeOneBinPlot = true;
-exampleSubject = 'sub-0201'; %'sub-wlsubj124'; % a specific subject ID, or 'all'
-exampleROI = 'MT';
-targetBin = 180;
-cartCondition1 = 'cartexp_horizontal_grating_upwards_motion'; %%'cartexp_vertical_stationary';
-cartCondition2 = 'cartexp_horizontal_stationary'; %'cartexp_horizontal_stationary';
-polCondition1 = 'polexp_pinwheel_grating_clockwise_motion'; %'polexp_annulus_grating_stationary'; 
-polCondition2 = 'polexp_pinwheel_grating_stationary'; %%'polexp_pinwheel_grating_stationary';
+exampleSubject = 'all'; % a specific subject ID, or 'all'
+exampleROI = 'V1';
+targetBin = 90; % 0 deg = right horizontal meridian
+cartConditions = {'cartexp_horizontal_stationary', 'cartexp_vertical_stationary', ...
+    'cartexp_rightleaning_grating_stationary', 'cartexp_leftleaning_grating_stationary'}; % all 4 dg stationary conditions
+polConditions = {'polexp_annulus_grating_stationary', 'polexp_pinwheel_grating_stationary', ...
+    'polexp_cspiral_grating_stationary', 'polexp_ccspiral_grating_stationary'}; % all 4 da stationary conditions
 
 if makeOneBinPlot
     plotOrientationConditionsOneBin(allRawTables, allModelTables, subjects, exampleSubject, exampleROI, targetBin, ...
-        cartCondition1, cartCondition2, polCondition1, polCondition2, ...
+        cartConditions, polConditions, ...
         offsetRawToBaseline, offsetModelToBaseline, savePlotsAsPDF, figSaveDir);
 end
 
@@ -1022,23 +1057,22 @@ function plotOrientationConditionsAllSubjects(allRawTables, allModelTables, subj
 end
 
 function plotOrientationConditionsOneBin(allRawTables, allModelTables, subjects, exampleSubject, exampleROI, targetBin, ...
-    cartCondition1, cartCondition2, polCondition1, polCondition2, offsetRaw, offsetModel, savePDFFlag, figSaveDir)
+    cartConditions, polConditions, offsetRaw, offsetModel, savePDFFlag, figSaveDir)
 % Restricted variant of the orientation-condition plots above: instead of
 % averaging/plotting across all 8 polar angle bins, uses only the single
 % specified targetBin; instead of averaging all 4 orientation conditions
-% per experiment, plots two specified conditions separately (each minus
+% per experiment, plots the specified conditions separately (each minus
 % that experiment's own blank). Subplot structure matches
 % plotOrientationConditionsAllSubjects: one subplot for dg/cartexp_ (left),
 % one for da/polexp_ (right). Within each subplot, one line per condition
 % (not per subject) -- color = condition, matching
 % plotOrientationConditionsAllVoxels's pattern.
 %
-% cartCondition1/cartCondition2: full column names for the cartexp_
-% subplot, e.g. 'cartexp_vertical_stationary', 'cartexp_horizontal_stationary'.
-% polCondition1/polCondition2: full column names for the polexp_ subplot
-% (dg and da conditions are named completely differently, so these are
-% independent from the cart* pair), e.g.
-% 'polexp_annulus_grating_stationary', 'polexp_pinwheel_grating_stationary'.
+% cartConditions/polConditions: cell arrays of full column names (any
+% length, e.g. 2 or all 4 stationary conditions) for the cartexp_/polexp_
+% subplots respectively, e.g. cartConditions = {'cartexp_vertical_stationary',
+% 'cartexp_horizontal_stationary'} (dg and da conditions are named
+% completely differently, so these two lists are independent).
 %
 % exampleSubject may be a specific subject ID, or 'all' -- in which case
 % the exact same per-subject computation is run for every processed
@@ -1051,6 +1085,15 @@ function plotOrientationConditionsOneBin(allRawTables, allModelTables, subjects,
 %
 % savePDFFlag/figSaveDir: if savePDFFlag is true, saves the figure as a
 % vector PDF into figSaveDir (created if needed).
+%
+% After plotting, prints the R^2 of each condition's plotted model curve
+% against its plotted raw curve (i.e. at this plot's own level of
+% aggregation -- one bin, one condition, averaged across whichever
+% subjects were selected), using GLMsingle's own R^2 definition (R^2 =
+% 100*(1-sum((data-model)^2)/sum(data^2))). This is a different quantity
+% from the whole-GLM cartexp_R2/polexp_R2 table columns -- those reflect
+% the full 13-condition model fit at the single-vertex level, not this
+% specific observer-averaged, single-bin, single-condition summary curve.
 %
 % Reads directly from the allRawTables/allModelTables per-subject cell
 % arrays (no need to reload the saved .mat files).
@@ -1073,19 +1116,23 @@ function plotOrientationConditionsOneBin(allRawTables, allModelTables, subjects,
         return
     end
 
-    projectConditions = {{cartCondition1, cartCondition2}, {polCondition1, polCondition2}};
+    projectConditions = {cartConditions, polConditions};
     projectBlanks = {'cartexp_blank', 'polexp_blank'};
     projectLabels = {'dg (Cartesian)', 'da (Polar)'};
 
     fig = figure('Name', sprintf('%s %s bin%d selected conditions', subjectLabel, exampleROI, targetBin));
     fig.Position = [1 954 2383 383];
 
+    axHandles = gobjects(numel(projectConditions), 1);
+    r2CondNames = {};
+    r2Values = [];
+
     for pj = 1:numel(projectConditions)
         theseConditions = projectConditions{pj};
         blankCol = projectBlanks{pj};
         colors = lines(numel(theseConditions));
 
-        subplot(1, 2, pj)
+        axHandles(pj) = subplot(1, 2, pj);
         hold on
         legendHandles = gobjects(numel(theseConditions), 1);
         legendLabels = strings(numel(theseConditions), 1);
@@ -1138,6 +1185,15 @@ function plotOrientationConditionsOneBin(allRawTables, allModelTables, subjects,
             rawVals = baselineCenter(rawTR, rawVals, offsetRaw);
             modelVals = baselineCenter(modelTR, modelVals, offsetModel);
 
+            % R^2 of this condition's observer-averaged model curve
+            % against its observer-averaged raw curve, using GLMsingle's
+            % own R^2 definition (R^2 = 100*(1-sum((data-model)^2)/sum(data^2)))
+            % applied at this plot's level of aggregation (one bin, one
+            % condition, averaged across the selected subjects) rather
+            % than the whole-GLM cartexp_R2/polexp_R2 columns.
+            r2CondNames{end+1} = condCol; %#ok<AGROW>
+            r2Values(end+1) = 100 * (1 - sum((rawVals - modelVals).^2) / sum(rawVals.^2)); %#ok<AGROW>
+
             plot(rawTR, rawVals, 'o', 'LineWidth', 1.5, 'Color', col, ...
                 'MarkerFaceColor', col, 'MarkerEdgeColor', 'w', 'HandleVisibility', 'off')
             h = plot(modelTR, modelVals, '-', 'LineWidth', 1.5, 'Color', col);
@@ -1157,11 +1213,24 @@ function plotOrientationConditionsOneBin(allRawTables, allModelTables, subjects,
         legend(legendHandles(keep), legendLabels(keep), 'Location', 'best', 'Interpreter', 'none')
     end
 
+    % share the same y-axis range across both subplots, and give each a
+    % 2:3 (y:x) plot box aspect ratio
+    sharedYLim = [min(arrayfun(@(a) min(ylim(a)), axHandles)), max(arrayfun(@(a) max(ylim(a)), axHandles))];
+    for pj = 1:numel(axHandles)
+        ylim(axHandles(pj), sharedYLim);
+        pbaspect(axHandles(pj), [3 2 1]);
+    end
+
     sgtitle(sprintf('%s %s %d^\\circ: selected conditions minus blank (circles=raw, solid=model)', ...
         subjectLabel, exampleROI, targetBin))
 
     if savePDFFlag
         savePDF(fig, figSaveDir, sprintf('orientationConditionsOneBin_bin%d_%s_%s', targetBin, exampleROI, subjectLabel));
+    end
+
+    fprintf('\nR^2 (observer-averaged model vs. raw TTA, %s, %s, %d^\\circ):\n', subjectLabel, exampleROI, targetBin);
+    for ri = 1:numel(r2CondNames)
+        fprintf('  %s: R^2 = %.2f\n', r2CondNames{ri}, r2Values(ri));
     end
 end
 

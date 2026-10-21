@@ -65,8 +65,7 @@ for ss=1:numel(subjects)
     % load raw signal data (in wpToolbox) - convert to .mgh if not already
     run = 1:length(matrices_onset);
     datafiles = load_data(bidsDir,projectName,'fsnative','.mgh',subj,ses,run) ;
-    modelfiles = load(fullfile(derivativesFolder, 'derivedModelFit.mat'));
-    modelfiles = modelfiles.modelfit;
+    modelfiles = loadDerivedModelFit(fullfile(derivativesFolder, 'derivedModelFit.mat'));
     
     %conditions = {'cardinaloblique', 'radialtangential'};
     conditions = {'mainCardinalVsMainOblique', 'derivedCardinalVsDerivedOblique'};
